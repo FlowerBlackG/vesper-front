@@ -1,22 +1,11 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 /* 上财果团团 */
 
-import { ReactNode } from "react"
-import LayoutFrame, { loadPageToLayoutFrame } from "../components/LayoutFrame/LayoutFrame"
+import { ReactNode, useRef } from "react"
+import LayoutFrame, { LayoutFrameHandle, loadPageToLayoutFrame } from "../components/LayoutFrame/LayoutFrame"
 import { globalData } from "./GlobalData"
-import IndexPage from "../pages/index/Index"
 import { FreeKeyObject } from "../utils/FreeKeyObject"
-import AboutPage from "../pages/about/About"
-import TongjiOAuthPage from "../pages/tongji-oauth/TongjiOAuth"
-import LoginPage from "../pages/login/Login"
-import HomePage from "../pages/home/Home"
-import CetScorePage from "../pages/func/cet-score/CetScore"
-import MsgPublishShowPage from "../pages/msg-publish-show/MsgPublishShow"
-import StuExamEnquiriesPage from "../pages/func/stu-exam-enquiries/StuExamEnquiries"
-import StuTimetableTermCompletePage from "../pages/func/student-timetable/term-complete/StuTimetableTermComplete"
-import MyGradesPage from "../pages/func/my-grades/MyGrades"
-import StuTimetableSingleDayPage from "../pages/func/student-timetable/single-day/SingleDay"
-import SportsTestDataPage from "../pages/func/sports-test-data/SportsTestData"
+import { AboutPage } from "../pages/about/About"
 
 
 /**
@@ -53,6 +42,8 @@ export interface PageRouteData {
 
     inFrame?: boolean
 
+    showInSidebar?: boolean
+
     category?: string
 
     permissionCheckPassed?: () => boolean
@@ -63,9 +54,7 @@ function isNullOrUndefined(e: any): boolean {
     return e === null || e === undefined
 }
 
-function preprocessRouteData(
-    route: PageRouteData, pageRouteEntityMap: FreeKeyObject
-) {
+function preprocessRouteData(route: PageRouteData, pageRouteEntityMap: FreeKeyObject) {
     if (isNullOrUndefined(route.title)) {
         route.title = route.name
     }
@@ -74,8 +63,12 @@ function preprocessRouteData(
         route.inFrame = true
     }
 
+    if (isNullOrUndefined(route.showInSidebar)) {
+        route.showInSidebar = true
+    }
+
     if (route.inFrame) {
-        route.element = <LayoutFrame ref={ globalData.layoutFrameRef }>
+        route.element = <LayoutFrame ref={ globalData.layoutFrameRef } >
             { route.element }
         </LayoutFrame>
     }
@@ -92,13 +85,37 @@ function preprocessRouteData(
 }
 
 
-function preprocess(pageRoutes: PageRouteData[], map: FreeKeyObject) {
+function preprocess(
+    pageRoutes: PageRouteData[], 
+    map: FreeKeyObject,
+    categories: PageRouteCategory[],
+) {
+
     pageRoutes.forEach((route) => {
         preprocessRouteData(route, map)
     })
+
+    categories.forEach((route) => {
+        if (isNullOrUndefined(route.title)) {
+            route.title = route.label
+        }
+    })
+}
+
+const categoryKeys = {
+    user: '_vc_user',
+    seat: '_vc_seat',
+    vesperCenterControlPanel: '_vc_ctrlPanel',
 }
 
 export default class PageRouteManager {
+
+    protected routeCategories: Array<PageRouteCategory> = [
+        {
+            key: categoryKeys.vesperCenterControlPanel,
+            label: '控制台'
+        }
+    ]
 
     /**
      * 页面路由表。
@@ -106,93 +123,19 @@ export default class PageRouteManager {
      *       因此，修改 path 后，必须前往对应页面类修改相应代码。
      */
     protected routes: Array<PageRouteData> = [
-
-        {
-            path: '',
-            name: 'index',
-            icon: '',
-            element: <IndexPage />
-            
-        },
-
         {
             path: 'about',
             name: '关于',
-            icon: '',
-            element: <AboutPage />
-        },
-
-        {
-            path: 'tongji-oauth',
-            name: '开放平台登录',
-            element: <TongjiOAuthPage />
-        },
-
-        {
-            path: 'login',
-            name: '登录',
-            inFrame: false,
-            element: <LoginPage />
-        },
-
-        {
-            path: 'home',
-            name: '主页',
-            inFrame: false,
-            element: <HomePage />
-        },
-
-        {
-            path: 'msg-publish-show',
-            name: '教务新闻',
-            element: <MsgPublishShowPage />
-        },
-
-        {
-            path: 'func/stu-exam-enquiries',
-            name: '考试安排',
-            element: <StuExamEnquiriesPage />
-        },
-
-        {
-            path: 'func/my-grades',
-            name: '我的成绩',
-            element: <MyGradesPage />
-        },
-
-        {
-            path: 'func/student-timetable/term-complete',
-            name: '学期课表',
-            element: <StuTimetableTermCompletePage />
-        },
-
-
-
-        {
-            path: 'func/student-timetable/single-day',
-            name: '单日课表',
-            element: <StuTimetableSingleDayPage />
-        },
-
-        {
-            path: 'func/cet-score',
-            name: '四六级成绩',
-            element: <CetScorePage />
-        },
-
-        {
-            path: 'func/sports-test-data',
-            name: '体锻体测',
-            element: <SportsTestDataPage />
-        },
-        
+            element: <AboutPage />,
+            category: categoryKeys.vesperCenterControlPanel,
+        }
         
     ]
 
     routeEntityMap: FreeKeyObject = {}
 
     protected constructor() {
-        preprocess(this.routes, this.routeEntityMap)
+        preprocess(this.routes, this.routeEntityMap, this.routeCategories)
     }
 
     protected static _instance: PageRouteManager
@@ -216,5 +159,9 @@ export default class PageRouteManager {
 
     static getRoutes(): PageRouteData[] {
         return this.instance().routes
+    }
+
+    static getCategories(): PageRouteCategory[] {
+        return this.instance().routeCategories
     }
 }

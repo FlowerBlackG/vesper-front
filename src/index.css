@@ -27,7 +27,7 @@ body, html {
 /* 更现代化的滚动条。 */
 ::-webkit-scrollbar,
 .nicer-scrollbar::-webkit-scrollbar {
-    width: 0px; /* 暂时从 8 改为 0，以应对 overlay 失效。 */
+    width: 8px; /* todo: 暂时从 8 改为 0，以应对 overlay 失效。 */
     height: 8px;
 }
 

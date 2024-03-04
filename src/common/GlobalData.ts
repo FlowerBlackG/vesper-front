@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 /* 上财果团团 */
 
-import { message } from "antd"
-import React from "react"
+import React, { useRef } from "react"
 import { HttpStatusCode } from "../utils/HttpStatusCode"
 import { request } from "../utils/request"
-import LayoutFrame from "../components/LayoutFrame/LayoutFrame"
+import LayoutFrame, { LayoutFrameHandle } from "../components/LayoutFrame/LayoutFrame"
 
 /**
  * 全局变量。
@@ -18,7 +17,7 @@ export const globalData = {
      * 指向边框对象的引用。 
      * 在 PageRoutes::preprocess 内设置。
      */
-    layoutFrameRef: React.createRef<LayoutFrame>(),
+    layoutFrameRef: null as React.RefObject<LayoutFrameHandle> | null,
 
 }
 

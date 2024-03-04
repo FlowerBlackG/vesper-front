@@ -6,64 +6,70 @@
  */
 
 import axios from 'axios'
-import React from 'react'
+import React, { useRef } from 'react'
 import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
-import MacroDefines from './common/MacroDefines' // todo
-import PageRouteManager from './common/PageRoutes' // todo
+import MacroDefines from './common/MacroDefines' 
+import PageRouteManager from './common/PageRoutes' 
+import { globalData } from './common/GlobalData'
+import { LayoutFrameHandle } from './components/LayoutFrame/LayoutFrame'
+import { useConstructor } from './utils/react-functional-helpers'
 
-export default class AppMain extends React.Component {
-    constructor(props: any) {
-        super(props)
+export default function AppMain() {
 
-        axios.defaults.withCredentials = false
+    globalData.layoutFrameRef = useRef<LayoutFrameHandle>(null)
+
+    useConstructor(constructor)
+    function constructor() {
+        axios.defaults.baseURL = MacroDefines.BACKEND_ROOT
+        axios.defaults.withCredentials = true
     }
 
-    override render(): React.ReactNode {
-        return <HashRouter basename={
-            MacroDefines.WEB_ROOT_PATH
-        }>
-            <Routes>
-                <Route path="/">{
+    
+    return <HashRouter basename={
+        MacroDefines.WEB_ROOT_PATH
+    }>
+        <Routes>
+            <Route path="/">{
 
-                    PageRouteManager.getRoutes().map((route) => {
-                        return <Route
-                            path={ route.path }
-                            element={ route.element }
-                        />
-                    })
+                PageRouteManager.getRoutes().map((route) => {
+                    return <Route
+                        path={ route.path }
+                        element={ route.element }
+                    />
+                })
 
-                }</Route>
+            }</Route>
 
-                <Route path='*' element={
+            <Route path='*' element={
+                <div
+                    style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        background: '#d0dfe6',
+                        userSelect: 'none'
+                    }}
+                >
                     <div
                         style={{
                             position: 'absolute',
-                            width: '100%',
-                            height: '100%',
-                            background: '#d0dfe6',
-                            userSelect: 'none'
+                            left: '50%',
+                            top: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            borderRadius: 24,
+                            background: '#2f90b9',
+                            padding: 76,
+                            fontSize: 28,
+                            color: '#fffc',
+                            boxShadow: '0px 6px 12px #5cb3cc'
                         }}
                     >
-                        <div
-                            style={{
-                                position: 'absolute',
-                                left: '50%',
-                                top: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                borderRadius: 24,
-                                background: '#2f90b9',
-                                padding: 76,
-                                fontSize: 28,
-                                color: '#fffc',
-                                boxShadow: '0px 6px 12px #5cb3cc'
-                            }}
-                        >
-                            404 not found.
-                        </div>
-                        
+                        404 not found.
                     </div>
-                }/>
-            </Routes>
-        </HashRouter>
-    }
+                    
+                </div>
+            }/>
+        </Routes>
+    </HashRouter>
+    
 }

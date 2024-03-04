@@ -9,7 +9,9 @@ import ReactDOM from "react-dom/client";
 import AppMain from './AppMain';
 
 import './index.css'
-import PageRouteManager from "./common/PageRoutes"; // todo
+import PageRouteManager from "./common/PageRoutes";
+import MacroDefines from "./common/MacroDefines";
+import { ConfigProvider } from "antd";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
@@ -25,5 +27,6 @@ root.render(
         }}
     >
         <AppMain />
-    </ConfigProvider> // todo
+
+    </ConfigProvider>
 )
