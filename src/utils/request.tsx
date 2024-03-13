@@ -7,10 +7,11 @@
  */
 
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
-import { resetGlobalData } from "../common/GlobalData"
+import { globalHooks, resetGlobalData } from "../common/GlobalData"
 import { HttpStatusCode } from "./HttpStatusCode"
 import URLNavigate from "./URLNavigate"
 import { message } from "antd"
+import { Navigate, useNavigate } from "react-router-dom"
 
 /**
  * 果团后端的 IResponse 统一返回格式。
@@ -41,7 +42,7 @@ function defaultNetworkExceptionHandler(isReallyNetworkError: boolean) {
  */
 function defaultUnauthorizedExceptionHandler() {
     resetGlobalData()
-    URLNavigate.to('/login')
+    globalHooks.app.navigate!({ pathname: '/login' })
 }
 
 

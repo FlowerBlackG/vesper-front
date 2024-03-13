@@ -21,7 +21,7 @@ interface AboutPageState {
 
 export function AboutPage() {
 
-    const pageEntity = PageRouteManager.getRouteEntity('about')
+    const pageEntity = PageRouteManager.getRouteEntity('/about')
 
     const [state, setState] = useState<AboutPageState>({
         appVersionName: Version.tag,

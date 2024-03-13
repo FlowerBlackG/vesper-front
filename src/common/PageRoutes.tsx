@@ -6,6 +6,9 @@ import LayoutFrame, { LayoutFrameHandle, loadPageToLayoutFrame } from "../compon
 import { globalData } from "./GlobalData"
 import { FreeKeyObject } from "../utils/FreeKeyObject"
 import { AboutPage } from "../pages/about/About"
+import { IndexPage } from "../pages/index/Index"
+import FluentUIEmojiProxy from "../utils/FluentUIEmojiProxy"
+import LoginPage from "../pages/login/Login"
 
 
 /**
@@ -24,6 +27,7 @@ export interface PageRouteData {
 
     /**
      * 页面路径，同时作为页面识别标记。需要不同。
+     * 要求是绝对路径。即，以"/"开头。
      */
     path: string
 
@@ -123,12 +127,32 @@ export default class PageRouteManager {
      *       因此，修改 path 后，必须前往对应页面类修改相应代码。
      */
     protected routes: Array<PageRouteData> = [
+     
+           
         {
-            path: 'about',
+            path: '/login',
+            name: '登录',
+            element: <LoginPage />,
+            inFrame: false,
+            showInSidebar: false
+        },
+
+        {
+            path: '/',
+            name: '首页',
+            element: <IndexPage />,
+            icon: FluentUIEmojiProxy.colorSvg('seedling_color'),
+            inFrame: true,
+            showInSidebar: true
+        },
+
+        {
+            path: '/about',
             name: '关于',
+            icon: FluentUIEmojiProxy.colorSvg('sparkles_color'),
             element: <AboutPage />,
             category: categoryKeys.vesperCenterControlPanel,
-        }
+        },
         
     ]
 

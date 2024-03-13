@@ -33,6 +33,7 @@ export type LayoutFrameHandle = {
     setDataLoading: (loading: boolean) => void
     setCurrentPageEntity: (entity: PageRouteData) => void
     setTitle: (title: string) => void
+    update: () => void
 }
 
 const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
@@ -40,6 +41,16 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
     ref: ForwardedRef<any>
 ) => {
 
+    
+    /**
+     * 函数导出
+     */
+    useImperativeHandle(ref, () => ({
+        setDataLoading,
+        setCurrentPageEntity,
+        setTitle,
+        update,
+    }))
     
 
     const [state, setState] = useState<LayoutFrameState>({
@@ -93,12 +104,6 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
         setState({...state})
     }
 
-
-    useImperativeHandle(ref, () => ({
-        setDataLoading,
-        setCurrentPageEntity,
-        setTitle,
-    }))
 
     function loadMenu() {
         let items = new Array<any>()
@@ -233,7 +238,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
                     whiteSpace: 'nowrap',
                     marginRight: '0.4em'
                     }}>
-                    { '// todo: name' }
+                    { globalData.userEntity?.username }
                 </div>
             </div>
         
@@ -257,6 +262,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
                     onSelect={(event) => {
 
                         let entity = PageRouteManager.getRouteEntity(event.key)
+                        
                         navigate({ pathname: entity.path })
                     }}
 
@@ -310,6 +316,9 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
              
         </div>
     }
+
+
+    /* 渲染。 */
 
     return <div style={{
         position: 'absolute',

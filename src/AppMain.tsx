@@ -7,12 +7,13 @@
 
 import axios from 'axios'
 import React, { useRef } from 'react'
-import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import MacroDefines from './common/MacroDefines' 
 import PageRouteManager from './common/PageRoutes' 
 import { globalData } from './common/GlobalData'
 import { LayoutFrameHandle } from './components/LayoutFrame/LayoutFrame'
 import { useConstructor } from './utils/react-functional-helpers'
+import { GlobalNavigate } from './components/GlobalNavigate'
 
 export default function AppMain() {
 
@@ -28,6 +29,7 @@ export default function AppMain() {
     return <HashRouter basename={
         MacroDefines.WEB_ROOT_PATH
     }>
+        <GlobalNavigate />
         <Routes>
             <Route path="/">{
 

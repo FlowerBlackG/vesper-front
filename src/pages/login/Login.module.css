@@ -1,0 +1,34 @@
+/* SPDX-License-Identifier: MulanPSL-2.0 */
+
+/*
+
+    创建于2024年3月13日 上海市嘉定区
+*/
+
+
+@import '../../index.css';
+
+
+.loginBtn {
+    background-color: #207f4c;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    border-radius: 24px;
+    height: 40px;
+    font-size: larger;
+    user-select: none;
+    box-shadow: 0 4px 10px #207f4c7f;
+    transition: 0.2s;
+}
+
+.loginBtn:hover {
+    background-color: #1a6840;
+}
+
+.loginBtn:active {
+    opacity: 0.72;
+}
+
