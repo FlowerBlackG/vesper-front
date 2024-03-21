@@ -36,7 +36,9 @@ export function IndexPage() {
         loadPageToLayoutFrame(pageEntity)
 
         ensureGlobalData()
-            .then(() => {})
+            .then(() => {
+                setState({...state}) // force re-render
+            })
             .catch(() => {})
     }
 
@@ -98,7 +100,7 @@ export function IndexPage() {
             PageRouteManager.getRoutes().map((route) => {
 
                 // 不显示本页和登录页。
-                if (route.path == '/' || route.path == '/login') {
+                if (['/login', '/', '/init'].includes(route.path)) {
                     return ''
                 }
 

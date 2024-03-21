@@ -41,7 +41,7 @@ export function AboutPage() {
         loadPageToLayoutFrame(pageEntity)
 
         request({
-            url: 'vesperCenterSystem/version'
+            url: 'vesperCenter/version'
         }).then(res => {
             res = res as IResponse
 
@@ -125,7 +125,7 @@ export function AboutPage() {
             }}
 
             onClick={() => {
-                const w = window.open('https://github.com/FlowerBlackG/vesper-center')
+                const w = window.open('https://github.com/FlowerBlackG/vesper-front')
                 
             }}
         >

@@ -18,10 +18,21 @@ import Version from "../../common/Version"
 import DateTimeUtils from "../../utils/DateTimeUtils"
 import { IResponse, request } from "../../utils/request"
 import { HttpStatusCode } from "../../utils/HttpStatusCode"
+import Random from "../../utils/Random"
 
 type LoginPageState = {
     loginOnProgress: boolean
 }
+
+
+const backgroundUrl = Random.randElement([
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp', // 嘉定校区鸟瞰
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231211_125623.webp', // 肖四
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp', // 嘉定校区图书馆
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210412_092042.webp', // 水杉
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_183307.webp', // 樱花冰糖
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_180029.webp', // 樱花猫猫
+])
 
 export default function LoginPage() {
 
@@ -31,12 +42,13 @@ export default function LoginPage() {
         loginOnProgress: false
     })
 
+    const [backgroundImgOpacity, setBackgroundOpacity] = useState(0)
+
+
     useConstructor(constructor)
     function constructor() {
         loadPageToLayoutFrame(pageEntity)
-        ensureGlobalData()
-            .then(() => {})
-            .catch(() => {})
+        checkVesperSystemInitialized()
     }
 
 
@@ -79,6 +91,27 @@ export default function LoginPage() {
     let password = ""
 
 
+    /* 检查系统是否需要初始化。 */
+    function checkVesperSystemInitialized() {
+        request({
+            url: 'vesperCenter/systemInitialized'
+        }).then(res => {
+
+            res = res as IResponse
+            
+            if (res.code !== HttpStatusCode.OK) {
+                message.error(res.msg)
+                return
+            }
+
+            let initialized = res.data as boolean
+            if (!initialized) {
+                globalHooks.app.navigate!({ pathname: '/init' })
+            }
+        }).catch(err => {})
+    }
+
+
     return <div
         style={{
             width: '100%',
@@ -87,22 +120,31 @@ export default function LoginPage() {
             top: 0,
             left: 0,
             display: 'flex',
-            backgroundColor: '#A7E8C3',
+            background: '#000'
         }}
     >
 
-        <div style={{
-            width: '100%',
-            height: '100%',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            backgroundImage: "url('https://guotuantuan.oss-cn-shanghai.aliyuncs.com/web-common-assets/illustrations-co/day56-tv-room.webp')",
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '50%',
-            backgroundPosition: 'center',
-            filter: 'blur(10px)'
-        }} />
+        { /* 背景图。 */ }
+
+        <img
+            src={ backgroundUrl }
+            style={{
+                objectFit: 'cover',
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                
+                opacity: backgroundImgOpacity,
+
+                transitionDuration: '1s',
+                transitionProperty: 'opacity',
+            }}
+            onLoad={() => {
+                setBackgroundOpacity(1)
+            }}
+        />
 
         
         <div style={{
@@ -121,9 +163,11 @@ export default function LoginPage() {
 
             width: '20rem',
 
-            background: '#fff6',
+            background: '#6664',
             borderRadius: 24,
-            boxShadow: '0px 6px 24px #0004',
+            boxShadow: '0px 6px 24px #0008',
+
+            backdropFilter: 'blur(8px)'
         }}>
 
             <div style={{
@@ -200,18 +244,16 @@ export default function LoginPage() {
 
         <div style={{ // 脚注
             position: 'absolute',
-            bottom: 6,
+            bottom: 0,
             left: '50%',
             transform: 'translateX(-50%)',
             color: '#0007',
-            userSelect: 'none',
-            textAlign: 'center'
+            textAlign: 'center',
+            borderRadius: 12,
+            padding: 4,
         }}>
-            { Version.tag } (build {Version.code})
-            <br />
-            构建时间：{ DateTimeUtils.iso8601toHumanFriendly(Version.buildTime) }
-            <br />
-            同济大学计算机系内部使用
+            { Version.tag } ({Version.code})-{Version.branch} {Version.buildTime}
+            
         </div>
     </div>
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 
-import { Permissions } from "./Permissions"
+import { Permission } from "./Permissions"
 
 /*
 
@@ -10,6 +10,7 @@ import { Permissions } from "./Permissions"
 
 export interface UserEntity {
     id: number
+    creator: number
     username: string
     
     /** 未加密的。该成员值尽量不要被设置。 */
@@ -23,6 +24,7 @@ export interface UserEntity {
 export interface SeatEntity {
     id: number
     userId: number
+    creator: number
     enabled: number
     linuxUid: number
     linuxLoginName: number
@@ -31,13 +33,26 @@ export interface SeatEntity {
     lastLoginTime: string
 }
 
-export interface PermissionGroupEntity {
-    id: Permissions
-    fullname: string
+export interface PermissionEntity {
+    id: Permission
+    enumKey: string
     note: string
 }
 
 export interface PermissionGrantEntity {
     userId: number
-    permissionId: Permissions
+    permissionId: Permission
+}
+
+
+export interface GroupPermissionEntity {
+    id: Permission
+    enumKey: string
+    note: string
+}
+
+export interface GroupPermissionGrantEntity {
+    userId: number
+    groupId: number
+    permissionId: Permission
 }

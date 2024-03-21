@@ -9,6 +9,11 @@ import { AboutPage } from "../pages/about/About"
 import { IndexPage } from "../pages/index/Index"
 import FluentUIEmojiProxy from "../utils/FluentUIEmojiProxy"
 import LoginPage from "../pages/login/Login"
+import InitPage from "../pages/init/Init"
+import MyPermissionsPage from "../pages/my-permissions/MyPermissions"
+import MyProfilePage from "../pages/my-profile/MyProfile"
+import UserManagementPage from "../pages/user-management/UserManagement"
+import { Permission } from "../api/Permissions"
 
 
 /**
@@ -118,7 +123,15 @@ export default class PageRouteManager {
         {
             key: categoryKeys.vesperCenterControlPanel,
             label: '控制台'
-        }
+        },
+        {
+            key: categoryKeys.seat,
+            label: '主机环境'
+        },
+        {
+            key: categoryKeys.user,
+            label: '用户'
+        },
     ]
 
     /**
@@ -137,6 +150,15 @@ export default class PageRouteManager {
             showInSidebar: false
         },
 
+           
+        {
+            path: '/init',
+            name: '首次启动',
+            element: <InitPage />,
+            inFrame: false,
+            showInSidebar: false
+        },
+
         {
             path: '/',
             name: '首页',
@@ -144,6 +166,45 @@ export default class PageRouteManager {
             icon: FluentUIEmojiProxy.colorSvg('seedling_color'),
             inFrame: true,
             showInSidebar: true
+        },
+
+
+        {
+            path: '/my-permissions',
+            name: '我的权限',
+            element: <MyPermissionsPage />,
+            icon: FluentUIEmojiProxy.colorSvg('zipper-mouth_face_color'),
+            inFrame: true,
+            showInSidebar: true
+        },
+
+
+        {
+            path: '/user-management',
+            name: '用户管理',
+            element: <UserManagementPage />,
+            icon: FluentUIEmojiProxy.colorSvg('school_color'),
+            inFrame: true,
+            showInSidebar: true,
+            category: categoryKeys.user,
+            permissionCheckPassed: () => {
+                if (globalData.userPermissions === null) {
+                    return false
+                }
+
+                return globalData.userPermissions.includes(Permission.CREATE_AND_DELETE_USER)
+            }
+        },
+
+
+        {
+            path: '/my-profile',
+            name: '我',
+            element: <MyProfilePage />,
+            icon: FluentUIEmojiProxy.colorSvg('hatching_chick_color'),
+            inFrame: true,
+            showInSidebar: true,
+            category: categoryKeys.vesperCenterControlPanel
         },
 
         {

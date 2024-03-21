@@ -12,6 +12,14 @@ import { HttpStatusCode } from "./HttpStatusCode"
 import URLNavigate from "./URLNavigate"
 import { message } from "antd"
 import { Navigate, useNavigate } from "react-router-dom"
+import { CookieBasedDataStore as DataStore } from "./CookieBasedDataStore"
+
+const vesperSession = {
+    token: null as string | null
+}
+
+const VESPER_SESSION_HTTP_HEADER_KEY = 'vesper-session'
+const VESPER_SESSION_TOKEN_DATASTORE_KEY = "vesper-session-token"
 
 /**
  * 果团后端的 IResponse 统一返回格式。
@@ -84,6 +92,23 @@ export function request(
         isQueryOurApi = true
     }
 
+    // 尝试获取缓存的 token。
+    if (vesperSession.token === null) {
+        let token = DataStore.get(VESPER_SESSION_TOKEN_DATASTORE_KEY)
+        if (token !== undefined) {
+            vesperSession.token = token
+        }
+    }
+
+    // 加入 vesper session token
+    if (isQueryOurApi && vesperSession.token !== null) {
+        if (params.headers === undefined) {
+            params.headers = {}
+        }
+
+        params.headers[VESPER_SESSION_HTTP_HEADER_KEY] = vesperSession.token
+    }
+
     return new Promise((resolve, reject) => {
         axios.request(params).then(res => {
             // axios 请求成功。
@@ -105,6 +130,17 @@ export function request(
                         reject(response)
                         
                     } else {
+
+                        // 拦截 vesper session token
+                        if (isQueryOurApi) {
+                            let token = res.headers[VESPER_SESSION_HTTP_HEADER_KEY]
+                            
+                            if (token !== undefined) {
+                                vesperSession.token = token
+                                DataStore.put(VESPER_SESSION_TOKEN_DATASTORE_KEY, token)
+                            }
+                        }
+
                         resolve(response)
                     }
                 } else {

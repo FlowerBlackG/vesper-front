@@ -22,7 +22,7 @@ root.render(
         theme={{
             token: {
                 // 设置主题色。
-                colorPrimary: '#20a162'
+                colorPrimary: '#1677b3'
             }
         }}
     >

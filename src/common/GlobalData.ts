@@ -6,7 +6,7 @@ import { HttpStatusCode } from "../utils/HttpStatusCode"
 import { IResponse, request } from "../utils/request"
 import LayoutFrame, { LayoutFrameHandle } from "../components/LayoutFrame/LayoutFrame"
 import { UserEntity } from "../api/Entities"
-import { Permissions } from "../api/Permissions"
+import { Permission } from "../api/Permissions"
 import { message } from "antd"
 import { NavigateFunction } from "react-router-dom"
 
@@ -24,7 +24,7 @@ export const globalData = {
     layoutFrameRef: null as React.RefObject<LayoutFrameHandle> | null,
 
     userEntity: null as UserEntity | null,
-    userPermissions: null as Permissions[] | null,
+    userPermissions: null as Permission[] | null,
 
 }
 
@@ -51,7 +51,7 @@ export function ensureGlobalData(useDefaultExceptionHandler: boolean = true) {
     let resolved = false
 
     const defaultExceptionHandler = () => {
-        message.error('无法加载用户信息。')
+        // do nothing.
     }
 
     return new Promise((resolve, reject) => {

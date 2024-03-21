@@ -10,7 +10,7 @@
 
 
 .loginBtn {
-    background-color: #207f4c;
+    background-color: #2f90b9;
     width: 100%;
     display: flex;
     align-items: center;
@@ -20,12 +20,12 @@
     height: 40px;
     font-size: larger;
     user-select: none;
-    box-shadow: 0 4px 10px #207f4c7f;
+    box-shadow: 0 4px 10px #2f90b97f;
     transition: 0.2s;
 }
 
 .loginBtn:hover {
-    background-color: #1a6840;
+    background-color: #1677b3;
 }
 
 .loginBtn:active {

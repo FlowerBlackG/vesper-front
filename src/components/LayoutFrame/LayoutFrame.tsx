@@ -307,6 +307,8 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
                 onClick={() => {
                     request({
                         url: 'user/logout'
+                    }).catch(err => {
+
                     }).finally(() => {
                         resetGlobalData()
                         navigate({ pathname: '/login' })
