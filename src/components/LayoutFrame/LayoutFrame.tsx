@@ -2,8 +2,6 @@
 
 /* 上财果团团 */
 
-/* 上财果团团 */
-
 import React, { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { FreeKeyObject } from '../../utils/FreeKeyObject';
@@ -12,22 +10,12 @@ import { globalData, resetGlobalData } from '../../common/GlobalData';
 import URLNavigate from '../../utils/URLNavigate';
 import { request } from '../../utils/request';
 import MacroDefines from '../../common/MacroDefines';
-import PageRouteManager, { PageRouteCategory, PageRouteData } from '../../common/PageRoutes';
+import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
 import { Button, Menu, Spin, message } from 'antd';
-import { LogoutOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LogoutOutlined } from '@ant-design/icons';
+import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
 
-
-type LayoutFrameState = {
-    pageTitle: string,
-    menuItems: Array<any>,
-    menuSelectedKey: string,
-
-    redirecting: boolean,
-
-    dataLoading: boolean,
-    pageIcon: string
-}
 
 export type LayoutFrameHandle = {
     setDataLoading: (loading: boolean) => void
@@ -51,18 +39,18 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
         setTitle,
         update,
     }))
-    
 
-    const [state, setState] = useState<LayoutFrameState>({
-        pageTitle: '',
-        menuItems: [],
-        menuSelectedKey: '',
 
-        redirecting: false,
-        dataLoading: false,
+    /* states */
 
-        pageIcon: ''
-    })
+    const [showBackBtn, setShowBackBtn] = useState(false)
+    const [pageTitle, setPageTitle] = useState('')
+    const [pageDataLoading, setPageDataLoading] = useState(false)
+    const [menuSelectedKey, setMenuSelectedKey] = useState('')
+    const [pageIcon, setPageIcon] = useState('')
+    const [menuItems, setMenuItems] = useState<any[]>([])
+
+    /* constructor */
 
     useConstructor(constructor)
     function constructor() {
@@ -78,30 +66,30 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
     }
 
     function setTitle(title: string) {
-        state.pageTitle = title;
-        setState({...state})
+        setPageTitle(title)
     }
 
     function setCurrentPageEntity(entity: PageRouteData) {
 
-        state.pageTitle = entity.title!
-        state.menuSelectedKey = entity.path
+        setTitle(entity.title!)
+        setMenuSelectedKey(entity.path)
 
         let pageIcon = entity.icon
         if (pageIcon === undefined) {
             pageIcon = ''
         }
+        setPageIcon(pageIcon)
 
-        state.pageTitle = entity.title!
-        state.menuSelectedKey = entity.path
-        state.dataLoading = false
-        state.pageIcon = pageIcon
-        setState({...state})
+        setPageDataLoading(false)
+
+        document.title = entity.title!.concat(' - 落霞前厅')
+
+        setShowBackBtn(entity.showBackButton!)
+        
     }
 
     function setDataLoading(loading: boolean) {
-        state.dataLoading = loading
-        setState({...state})
+        setPageDataLoading(loading)
     }
 
 
@@ -169,17 +157,10 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
             
         })
 
-        state.menuItems = items
-        setState({...state})
+        setMenuItems(items)
         
     }
 
-    function navigator(path: string) {
-        state.redirecting = false;
-        setState({...state})
-
-        return <Navigate to={'/' + path} />
-    }
 
     useEffect(() => {
         if (currentRouteEntity !== undefined) {
@@ -216,7 +197,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
             }}>
 
                 <img
-                    src={ state.pageIcon }
+                    src={ pageIcon }
                     style={{
                         width: '1.2em',
                         flexShrink: '0',
@@ -257,7 +238,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
             >
 
                 <Menu 
-                    items={ state.menuItems }
+                    items={ menuItems }
                     
                     onSelect={(event) => {
 
@@ -267,7 +248,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
                     }}
 
                     mode='inline'
-                    selectedKeys={[ state.menuSelectedKey ]}
+                    selectedKeys={[ menuSelectedKey ]}
                 />
    
 
@@ -286,10 +267,28 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
             paddingLeft: 18,
             borderBottom: '1px solid #0004'
         }}>
-            { state.pageTitle }
-       
+
+            { /* 返回按钮 */ }
+            {
+                showBackBtn &&
+                <Button
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                    shape='circle'
+                    icon={<ArrowLeftOutlined />}
+                    onClick={ () => { navigate( -1 ) } }
+                />
+            }
+
+            <div style={{ marginLeft: showBackBtn ? 18 : 0 }}>
+                { pageTitle }
+            </div>
+
             <Spin 
-                spinning={state.dataLoading}
+                spinning={ pageDataLoading }
                 style={{
                     marginLeft: 10,
                 }}
@@ -359,10 +358,6 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
         </div>
 
         { /* 页面跳转。 */ }
-
-        { state.redirecting &&
-            navigator(state.menuSelectedKey)
-        }
 
     </div>
 

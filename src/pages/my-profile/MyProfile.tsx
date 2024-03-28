@@ -7,7 +7,7 @@
 
 
 import { useState } from 'react'
-import PageRouteManager from '../../common/PageRoutes'
+import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import styles from './MyInfo.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import { Avatar, Button, Modal, Spin, Typography } from 'antd'

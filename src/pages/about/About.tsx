@@ -9,11 +9,12 @@ import DateTimeUtils from '../../utils/DateTimeUtils';
 import { HttpStatusCode } from '../../utils/HttpStatusCode';
 import { IResponse, request } from '../../utils/request';
 import styles from './About.module.css'
-import PageRouteManager from '../../common/PageRoutes';
+import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
 import { message } from 'antd';
 import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame';
 import FluentUIEmojiProxy from '../../utils/FluentUIEmojiProxy';
+import Config from '../../common/Config';
 
 interface AboutPageState {
     [key: string]: any
@@ -34,6 +35,8 @@ export function AboutPage() {
 
         dataLoading: true
     })
+
+    const [backendRoot, setBackendRoot] = useState(Config.backendRoot)
 
     useConstructor(constructor)
     function constructor() {
@@ -98,6 +101,14 @@ export function AboutPage() {
                 后台构建：
                 {
                     state.backendBuildtime
+                }
+            </div>
+
+
+            <div>
+                后台地址：
+                {
+                    backendRoot
                 }
             </div>
 

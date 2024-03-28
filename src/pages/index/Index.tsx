@@ -6,7 +6,7 @@
 */
 
 import { useState } from "react";
-import PageRouteManager from "../../common/PageRoutes";
+import PageRouteManager from "../../common/PageRoutes/PageRouteManager";
 import { useConstructor } from "../../utils/react-functional-helpers";
 import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame";
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy";
@@ -100,7 +100,7 @@ export function IndexPage() {
             PageRouteManager.getRoutes().map((route) => {
 
                 // 不显示本页和登录页。
-                if (['/login', '/', '/init'].includes(route.path)) {
+                if (route.showInHomePage === false) {
                     return ''
                 }
 

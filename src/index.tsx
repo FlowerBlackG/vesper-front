@@ -9,7 +9,7 @@ import ReactDOM from "react-dom/client";
 import AppMain from './AppMain';
 
 import './index.css'
-import PageRouteManager from "./common/PageRoutes";
+import PageRouteManager from "./common/PageRoutes/PageRouteManager";
 import MacroDefines from "./common/MacroDefines";
 import { ConfigProvider } from "antd";
 

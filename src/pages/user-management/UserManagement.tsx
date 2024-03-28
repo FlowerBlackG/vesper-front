@@ -7,7 +7,7 @@
 
 import { useState } from 'react'
 import { ensureGlobalData, globalData } from '../../common/GlobalData'
-import PageRouteManager from '../../common/PageRoutes'
+import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame'
 import './UserManagement.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'

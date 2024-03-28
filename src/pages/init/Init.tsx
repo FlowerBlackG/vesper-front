@@ -8,7 +8,7 @@
 
 
 import { Button, Card, Input, Modal, message } from 'antd'
-import PageRouteManager from '../../common/PageRoutes'
+import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import styles from './Init.module.css'
 import { useState } from 'react'

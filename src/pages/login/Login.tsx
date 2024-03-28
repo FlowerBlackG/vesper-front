@@ -8,17 +8,19 @@
 
 import { useState } from "react"
 import { ensureGlobalData, globalHooks } from "../../common/GlobalData"
-import PageRouteManager from "../../common/PageRoutes"
+import PageRouteManager from "../../common/PageRoutes/PageRouteManager"
 import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../utils/react-functional-helpers"
 import styles from "./Login.module.css"
-import { Input, Spin, message } from "antd"
+import { Button, FloatButton, Input, Modal, Spin, message } from "antd"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
 import Version from "../../common/Version"
 import DateTimeUtils from "../../utils/DateTimeUtils"
 import { IResponse, request } from "../../utils/request"
 import { HttpStatusCode } from "../../utils/HttpStatusCode"
 import Random from "../../utils/Random"
+import { CloudServerOutlined, LinkOutlined } from "@ant-design/icons"
+import Config from "../../common/Config"
 
 type LoginPageState = {
     loginOnProgress: boolean
@@ -26,12 +28,12 @@ type LoginPageState = {
 
 
 const backgroundUrl = Random.randElement([
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp', // 嘉定校区鸟瞰
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231211_125623.webp', // 肖四
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp', // 嘉定校区图书馆
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210412_092042.webp', // 水杉
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_183307.webp', // 樱花冰糖
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_180029.webp', // 樱花猫猫
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp',  // 嘉定校区鸟瞰
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231211_125623.webp',  // 肖四
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp',  // 嘉定校区图书馆
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210412_092042.webp',  // 水杉
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_183307.webp',  // 樱花冰糖
+    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_180029.webp',  // 樱花猫猫
 ])
 
 export default function LoginPage() {
@@ -109,6 +111,59 @@ export default function LoginPage() {
                 globalHooks.app.navigate!({ pathname: '/init' })
             }
         }).catch(err => {})
+    }
+
+
+    let editBackendModalBackendUrl = ''
+    const [backendUrl, setBackendUrl] = useState(Config.backendRoot)
+
+    function showEditBackendModal() {
+        Modal.info({
+            title: '更改后端地址',
+            closable: true,
+            onOk() {
+                setBackendUrl(editBackendModalBackendUrl)
+                Config.backendRoot = editBackendModalBackendUrl
+                editBackendModalBackendUrl = ''
+            },
+            centered: true,
+            maskClosable: true,
+            content: <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+                <div>
+                    当前地址：{ backendUrl }
+                </div>
+
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        marginTop: 8,
+                        alignItems: 'center'
+                    }}
+                >
+                    <div 
+                        style={{ 
+                            flexShrink: 0,
+                            maxLines: 1 
+                        }}
+                    >
+                        修改为：
+                    </div>
+
+                    <Input 
+                        onChange={(event) => {
+                            editBackendModalBackendUrl = event.target.value
+                        }}
+                    />
+                    
+                </div>            
+            </div>
+        })
     }
 
 
@@ -201,6 +256,11 @@ export default function LoginPage() {
                 onChange={(event) => {
                     uname = event.target.value
                 }}
+              
+                onInput={(event) => {
+                    let target = event.target as any
+                    uname = target.value
+                }}
             />
             <Input.Password 
                 placeholder='密码'
@@ -211,6 +271,11 @@ export default function LoginPage() {
 
                 onChange={(event) => {
                     password = event.target.value
+                }}
+                
+                onInput={(event) => {
+                    let target = event.target as any
+                    password = target.value
                 }}
 
                 onPressEnter={(event) => loginBtnClickHandler()}
@@ -255,6 +320,15 @@ export default function LoginPage() {
             { Version.tag } ({Version.code})-{Version.branch} {Version.buildTime}
             
         </div>
+
+        { /* 后端地址配置按钮 */ }
+        <FloatButton
+            type="primary"
+            icon={ <LinkOutlined /> }
+            onClick={() => {
+                showEditBackendModal()
+            }}
+        />
     </div>
 
 }

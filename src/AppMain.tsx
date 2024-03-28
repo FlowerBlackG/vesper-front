@@ -9,7 +9,7 @@ import axios from 'axios'
 import React, { useRef } from 'react'
 import { BrowserRouter, HashRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import MacroDefines from './common/MacroDefines' 
-import PageRouteManager from './common/PageRoutes' 
+import PageRouteManager from './common/PageRoutes/PageRouteManager' 
 import { globalData } from './common/GlobalData'
 import { LayoutFrameHandle } from './components/LayoutFrame/LayoutFrame'
 import { useConstructor } from './utils/react-functional-helpers'
@@ -42,35 +42,67 @@ export default function AppMain() {
 
             }</Route>
 
+            { /* 404 not found. */ }
             <Route path='*' element={
                 <div
                     style={{
                         position: 'absolute',
                         width: '100%',
                         height: '100%',
-                        background: '#d0dfe6',
                         userSelect: 'none'
                     }}
                 >
+
+                    <img
+                        src={ 
+                            'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp' // 嘉图
+                        }
+                        style={{
+                            objectFit: 'cover',
+                            width: '100%',
+                            height: '100%',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+            
+                            transitionDuration: '1s',
+                            transitionProperty: 'opacity',
+                        }}
+                    />
+                    
                     <div
                         style={{
                             position: 'absolute',
                             left: '50%',
                             top: '50%',
                             transform: 'translate(-50%, -50%)',
+                
+                            display: 'flex',
+                            flexDirection: 'column',
+                
+                            paddingTop: '4rem',
+                            paddingBottom: '4rem',
+                            paddingLeft: '2rem',
+                            paddingRight: '2rem',
+                
+                            width: '16rem',
+                
+                            background: '#8884',
                             borderRadius: 24,
-                            background: '#2f90b9',
-                            padding: 76,
+                            boxShadow: '0px 6px 24px #0008',
+                
+                            backdropFilter: 'blur(8px)',
+                            textAlign: 'center',
                             fontSize: 28,
-                            color: '#fffc',
-                            boxShadow: '0px 6px 12px #5cb3cc'
+                            color: '#ffff'
                         }}
                     >
                         404 not found.
                     </div>
                     
                 </div>
-            }/>
+            }/> { /* end of 404 not found. */ }
+
         </Routes>
     </HashRouter>
     
