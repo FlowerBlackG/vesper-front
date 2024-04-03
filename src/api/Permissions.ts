@@ -8,6 +8,7 @@
  *   保持一致。
  */
 
+
 /**
  * 权限枚举。
  */
@@ -58,8 +59,6 @@ export enum Permission {
     CREATE_GROUP = 300,
 
 
-
-
 }
 
 
@@ -105,10 +104,5 @@ export enum GroupPermission {
 
 
 
-
-
-
-
-
-
 }
+

@@ -5,10 +5,11 @@ import React, { useRef } from "react"
 import { HttpStatusCode } from "../utils/HttpStatusCode"
 import { IResponse, request } from "../utils/request"
 import LayoutFrame, { LayoutFrameHandle } from "../components/LayoutFrame/LayoutFrame"
-import { UserEntity } from "../api/Entities"
+import { GroupPermissionEntity, GroupPermissionGrantEntity, UserEntity } from "../api/Entities"
 import { Permission } from "../api/Permissions"
 import { message } from "antd"
 import { NavigateFunction } from "react-router-dom"
+import { GroupPermissionStore, PermissionStore } from "./GroupPermissionStore"
 
 /**
  * 全局变量。
@@ -24,7 +25,8 @@ export const globalData = {
     layoutFrameRef: null as React.RefObject<LayoutFrameHandle> | null,
 
     userEntity: null as UserEntity | null,
-    userPermissions: null as Permission[] | null,
+    userPermissions: new PermissionStore,
+    groupPermissions: new GroupPermissionStore
 
 }
 
@@ -38,7 +40,27 @@ export const globalHooks = {
 
 export function resetGlobalData() {
     globalData.userEntity = null
-    globalData.userPermissions = null
+    globalData.userPermissions.clear()
+    globalData.groupPermissions.clear()
+}
+
+
+export interface EnsureGlobalDataParams {
+    useDefaultExceptionHandler?: boolean
+    dontReject?: boolean
+    dontResolve?: boolean
+    forceReloadGroupPermissions?: boolean
+    forceReloadPermissions?: boolean
+    forceReloadUserEntity?: boolean
+}
+
+const ensureGlobalDataDefaultParams: EnsureGlobalDataParams = {
+    useDefaultExceptionHandler: true,
+    dontReject: false,
+    dontResolve: false,
+    forceReloadGroupPermissions: false,
+    forceReloadPermissions: false,
+    forceReloadUserEntity: false,
 }
 
 
@@ -46,61 +68,115 @@ export function resetGlobalData() {
  * 用户浏览器刷新时，globalData 可能会被清空，但 session 仍存在。
  * 此时，需要重新获取用户信息。
  */
-export function ensureGlobalData(useDefaultExceptionHandler: boolean = true) {
-    let exceptionOccurreded = false
-    let resolved = false
+export function ensureGlobalData(callParams: EnsureGlobalDataParams = {}) {
+    
+    // 处理参数。
+    
+    let params: EnsureGlobalDataParams = { ...ensureGlobalDataDefaultParams }
+    Object.keys(params).forEach(key => {
+        let callValue = (callParams as any)[key]
+        if (callValue !== undefined) {
+            (params as any)[key] = callValue
+        }
+    })
 
-    const defaultExceptionHandler = () => {
-        // do nothing.
+    // 重置状态。
+
+    if (params.forceReloadGroupPermissions) {
+        globalData.groupPermissions.clear()
     }
 
+    if (params.forceReloadGroupPermissions) {
+        globalData.userPermissions.clear()
+    }
+
+    if (params.forceReloadUserEntity) {
+        globalData.userEntity = null
+    }
+
+
     return new Promise((resolve, reject) => {
-        if (globalData.userEntity !== null && globalData.userPermissions !== null) {
+
+        let exceptionOccurreded = false
+        let resolved = false
+        const tryResolve = () => {
+            if (
+                params.dontResolve
+                || resolved
+                || globalData.userEntity === null
+                || !globalData.userPermissions.ready
+                || !globalData.groupPermissions.ready
+            ) {
+                return
+            }
+
+            resolved = true
             resolve(null)
         }
 
+        const defaultExceptionHandler = () => {
+            // do nothing.
+        }
+        
+        tryResolve()
+
         if (globalData.userEntity === null) {
             loadBasicInfo().then(() => {
-                if (globalData.userPermissions !== null && !resolved) {
-                    resolved = true
-                    resolve(null)
-                }
+                tryResolve()
             }).catch(() => {
                 if (!exceptionOccurreded) {
                     exceptionOccurreded = true
-                    if (useDefaultExceptionHandler) {
+                    if (params.useDefaultExceptionHandler) {
                         defaultExceptionHandler()                        
                     }
                     
-                    reject()
-
+                    if (!params.dontReject)
+                        reject()
                 }
             })
         }
 
         // todo: 这附近有bug。如果获取权限和获取信息，有一个接口挂了，依旧会 resolve。
 
-        if (globalData.userPermissions === null) {
+        if (!globalData.userPermissions.ready) {
             loadPermissions().then(() => {
-                if (globalData.userEntity !== null && !resolved) {
-                    resolved = true
-                    resolve(null)
-                }
+                tryResolve()
             }).catch(() => {
                 if (!exceptionOccurreded) {
                     exceptionOccurreded = true
 
-                    if (useDefaultExceptionHandler) {
+                    if (params.useDefaultExceptionHandler) {
                         defaultExceptionHandler()
                     }
 
-                    reject()
+                    if (!params.dontReject)
+                        reject()
                 }
             })
         }
+
+        
+        if (!globalData.groupPermissions.ready) {
+            loadGroupPermissions().then(() => {
+                tryResolve()
+            }).catch(() => {
+                if (!exceptionOccurreded) {
+                    exceptionOccurreded = true
+
+                    if (params.useDefaultExceptionHandler) {
+                        defaultExceptionHandler()
+                    }
+
+                    if (!params.dontReject)
+                        reject()
+                }
+            })
+        }
+
         
     }) // return new Promise((resolve, reject) => {
 } // export function ensureGlobalData
+
 
 
 function loadBasicInfo() {
@@ -138,13 +214,14 @@ function loadPermissions() {
             method: 'get'
         }, false).then(res => {
             res = res as IResponse
-            if (res.code == HttpStatusCode.OK) {
+            if (res.code === HttpStatusCode.OK) {
     
-                globalData.userPermissions = []
+                globalData.userPermissions.clear()
                 for (let obj of res.data) {
-                    globalData.userPermissions.push(obj.permissionId)
+                    globalData.userPermissions.put(obj.permissionId)
                 }
     
+                globalData.userPermissions.ready = true
                 globalData.layoutFrameRef?.current?.update()
 
                 resolve(null)
@@ -152,9 +229,32 @@ function loadPermissions() {
                 message.warning(res.code + res.msg)
                 reject()
             }
-        }).catch(() => {
-            reject()
-        })
+        }).catch(reject)
     })
     
+}
+
+
+function loadGroupPermissions() {
+    return new Promise((resolve, reject) => {
+        request({
+            url: 'group/permissions'
+        }, false).then(res => {
+            res = res as IResponse
+            if (res.code === HttpStatusCode.OK) {
+                for (let obj of res.data) {
+                    globalData.groupPermissions.putGrantEntity(obj)
+                }
+
+                globalData.groupPermissions.ready = true
+                globalData.layoutFrameRef?.current?.update()
+
+                resolve(null)
+            } else {
+                message.warning(res.code + res.msg)
+                reject()
+            }
+        }).catch(reject)
+    })
+
 }

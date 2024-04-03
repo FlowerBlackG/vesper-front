@@ -31,19 +31,20 @@ export default function AppMain() {
     }>
         <GlobalNavigate />
         <Routes>
-            <Route path="/">{
+            <Route path="/" key={ "appmain-route-root" }>{
 
                 PageRouteManager.getRoutes().map((route) => {
                     return <Route
                         path={ route.path }
                         element={ route.element }
+                        key={ "appmain-route-".concat(route.path) }
                     />
                 })
 
             }</Route>
 
             { /* 404 not found. */ }
-            <Route path='*' element={
+            <Route path='*' key={ "appmain-route-any" } element={
                 <div
                     style={{
                         position: 'absolute',

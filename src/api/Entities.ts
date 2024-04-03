@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 
-import { Permission } from "./Permissions"
+import { GroupPermission, Permission } from "./Permissions"
 
 /*
 
@@ -46,7 +46,7 @@ export interface PermissionGrantEntity {
 
 
 export interface GroupPermissionEntity {
-    id: Permission
+    id: GroupPermission
     enumKey: string
     note: string
 }
@@ -54,5 +54,6 @@ export interface GroupPermissionEntity {
 export interface GroupPermissionGrantEntity {
     userId: number
     groupId: number
-    permissionId: Permission
+    permissionId: GroupPermission
 }
+

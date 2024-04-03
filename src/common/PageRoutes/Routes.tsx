@@ -7,12 +7,14 @@
 import { Permission } from "../../api/Permissions"
 import { AboutPage } from "../../pages/about/About"
 import GroupsPage from "../../pages/groups/Groups"
+import GroupsSubPages from "../../pages/groups/GroupsSubPages"
 import { IndexPage } from "../../pages/index/Index"
 import InitPage from "../../pages/init/Init"
 import LoginPage from "../../pages/login/Login"
 import MyPermissionsPage from "../../pages/my-permissions/MyPermissions"
 import MyProfilePage from "../../pages/my-profile/MyProfile"
 import SeatsPage from "../../pages/seats/Seats"
+import SystemLoadPage from "../../pages/system-load/SystemLoad"
 import UserManagementPage from "../../pages/user-management/UserManagement"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
 import { globalData } from "../GlobalData"
@@ -105,10 +107,6 @@ export default class PageRoutes {
             showInSidebar: true,
             category: categoryKeys.user,
             permissionCheckPassed: () => {
-                if (globalData.userPermissions === null) {
-                    return false
-                }
-    
                 return globalData.userPermissions.includes(Permission.CREATE_AND_DELETE_USER)
             }
         },
@@ -133,6 +131,19 @@ export default class PageRoutes {
             category: categoryKeys.group,
 
         },
+
+        {
+            path: '/groups/user-management',
+            name: '群组用户管理',
+            element: <GroupsSubPages.UserManagementPage />,
+            icon: FluentUIEmojiProxy.colorSvg('bagel_color'),
+            inFrame: true,
+            showInSidebar: false,
+            showInHomePage: false,
+            showBackButton: true,
+            category: categoryKeys.group,
+
+        },
     
         {
             path: '/my-profile',
@@ -142,6 +153,15 @@ export default class PageRoutes {
             inFrame: true,
             showInSidebar: true,
             category: categoryKeys.vesperCenterControlPanel
+        },
+
+
+        {
+            path: '/system-load',
+            name: '系统负载',
+            icon: FluentUIEmojiProxy.colorSvg('fire_color'),
+            element: <SystemLoadPage />,
+            category: categoryKeys.vesperCenterControlPanel,
         },
     
         {
