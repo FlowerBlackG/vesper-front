@@ -28,13 +28,32 @@ export class GroupPermissionStore {
         this.store.get(groupId)?.add(permission)
     }
 
-    contains(groupId: number, permission: GroupPermission) {
+    contains(
+        groupId: number | null | undefined | string, permission: GroupPermission
+    ): boolean {
+
+        // 输入错误处理
+        if (groupId === null || groupId === undefined) {
+            return false
+        }
+
+        if (typeof groupId === 'string') {
+            groupId = Number(groupId)
+            if (Number.isNaN(groupId)) {
+                return false
+            }
+        }
+
+        // 取值
         if (!this.store.has(groupId)) {
             return false
         }
 
         return this.store.get(groupId)!.has(permission)
     }
+
+    has = this.contains
+    includes = this.contains
 
     ready = false
 

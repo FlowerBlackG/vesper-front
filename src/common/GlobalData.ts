@@ -9,7 +9,8 @@ import { GroupPermissionEntity, GroupPermissionGrantEntity, UserEntity } from ".
 import { Permission } from "../api/Permissions"
 import { message } from "antd"
 import { NavigateFunction } from "react-router-dom"
-import { GroupPermissionStore, PermissionStore } from "./GroupPermissionStore"
+import { GroupPermissionStore, PermissionStore } from "./PermissionStore"
+import { later } from "../utils/later"
 
 /**
  * 全局变量。
@@ -52,6 +53,8 @@ export interface EnsureGlobalDataParams {
     forceReloadGroupPermissions?: boolean
     forceReloadPermissions?: boolean
     forceReloadUserEntity?: boolean
+
+    resolveLater?: boolean
 }
 
 const ensureGlobalDataDefaultParams: EnsureGlobalDataParams = {
@@ -61,6 +64,8 @@ const ensureGlobalDataDefaultParams: EnsureGlobalDataParams = {
     forceReloadGroupPermissions: false,
     forceReloadPermissions: false,
     forceReloadUserEntity: false,
+
+    resolveLater: false,
 }
 
 
@@ -111,7 +116,11 @@ export function ensureGlobalData(callParams: EnsureGlobalDataParams = {}) {
             }
 
             resolved = true
-            resolve(null)
+            if (params.resolveLater) {
+                later(() => resolve(null))
+            } else {
+                resolve(null)
+            }
         }
 
         const defaultExceptionHandler = () => {
@@ -211,8 +220,11 @@ function loadPermissions() {
     return new Promise((resolve, reject) => {
         request({
             url: 'user/myPermissions',
-            method: 'get'
-        }, false).then(res => {
+            method: 'get',
+            vfOpts: {
+                useDefaultUnauthorizedExceptionHandler: false
+            }
+        }).then(res => {
             res = res as IResponse
             if (res.code === HttpStatusCode.OK) {
     
@@ -238,8 +250,11 @@ function loadPermissions() {
 function loadGroupPermissions() {
     return new Promise((resolve, reject) => {
         request({
-            url: 'group/permissions'
-        }, false).then(res => {
+            url: 'group/permissions',
+            vfOpts: {
+                useDefaultUnauthorizedExceptionHandler: false
+            }
+        }).then(res => {
             res = res as IResponse
             if (res.code === HttpStatusCode.OK) {
                 for (let obj of res.data) {

@@ -11,7 +11,6 @@ import { ensureGlobalData, globalHooks } from "../../common/GlobalData"
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager"
 import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../utils/react-functional-helpers"
-import styles from "./Login.module.css"
 import { Button, FloatButton, Input, Modal, Spin, message } from "antd"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
 import Version from "../../common/Version"
@@ -21,20 +20,18 @@ import { HttpStatusCode } from "../../utils/HttpStatusCode"
 import Random from "../../utils/Random"
 import { CloudServerOutlined, LinkOutlined } from "@ant-design/icons"
 import Config from "../../common/Config"
+import { LoginPageBackgroundManager } from "./LoginPageBackgrounds"
 
 type LoginPageState = {
     loginOnProgress: boolean
 }
 
 
-const backgroundUrl = Random.randElement([
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp',  // 嘉定校区鸟瞰
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231211_125623.webp',  // 肖四
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp',  // 嘉定校区图书馆
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210412_092042.webp',  // 水杉
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_183307.webp',  // 樱花冰糖
-    'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_180029.webp',  // 樱花猫猫
-])
+const data = {
+    uname: '',
+    password: ''
+}
+
 
 export default function LoginPage() {
 
@@ -46,9 +43,13 @@ export default function LoginPage() {
 
     const [backgroundImgOpacity, setBackgroundOpacity] = useState(0)
 
+    const [loginButtonHover, setLoginButtonHover] = useState(false)
+    const [loginButtonActive, setLoginButtonActive] = useState(false)
 
     useConstructor(constructor)
     function constructor() {
+        data.password = ''
+        data.uname = ''
         loadPageToLayoutFrame(pageEntity)
         checkVesperSystemInitialized()
     }
@@ -61,13 +62,13 @@ export default function LoginPage() {
             state.loginOnProgress = true
             setState({ ...state })
         }
-
+        
         request({
             url: 'user/login',
             method: 'post',
             data: {
-                uname: uname,
-                password: password
+                uname: data.uname,
+                password: data.password
             }
         }).then(res => {
             res = res as IResponse
@@ -87,10 +88,6 @@ export default function LoginPage() {
             setState({...state})
         })
     }
-
-
-    let uname = ""
-    let password = ""
 
 
     /* 检查系统是否需要初始化。 */
@@ -167,6 +164,8 @@ export default function LoginPage() {
     }
 
 
+    const loginButtonStyles = LoginPageBackgroundManager.instance.background.styles!.button
+
     return <div
         style={{
             width: '100%',
@@ -182,7 +181,7 @@ export default function LoginPage() {
         { /* 背景图。 */ }
 
         <img
-            src={ backgroundUrl }
+            src={ LoginPageBackgroundManager.instance.background.url }
             style={{
                 objectFit: 'cover',
                 width: '100%',
@@ -254,12 +253,12 @@ export default function LoginPage() {
                 }}
 
                 onChange={(event) => {
-                    uname = event.target.value
+                    data.uname = event.target.value
                 }}
               
                 onInput={(event) => {
                     let target = event.target as any
-                    uname = target.value
+                    data.uname = target.value
                 }}
             />
             <Input.Password 
@@ -270,12 +269,12 @@ export default function LoginPage() {
                 }}
 
                 onChange={(event) => {
-                    password = event.target.value
+                    data.password = event.target.value
                 }}
                 
                 onInput={(event) => {
                     let target = event.target as any
-                    password = target.value
+                    data.password = target.value
                 }}
 
                 onPressEnter={(event) => loginBtnClickHandler()}
@@ -296,7 +295,30 @@ export default function LoginPage() {
                 :
 
                     <div 
-                        className={ styles.loginBtn }
+                        style={
+                            loginButtonHover ?
+                                loginButtonActive ? 
+                                    loginButtonStyles.active 
+                                : 
+                                    loginButtonStyles.hover
+                            :
+                                loginButtonStyles.normal
+                        }
+
+                        onMouseEnter={() => setLoginButtonHover(true)}
+                        onMouseLeave={() => setLoginButtonHover(false)}
+                        onMouseDown={() => setLoginButtonActive(true)}
+                        onMouseUp={() => setLoginButtonActive(false)}
+                        
+                        
+                        onTouchStart={() => {
+                            setLoginButtonActive(true)
+                            setLoginButtonHover(true)
+                        }}
+                        onTouchEnd={() => {
+                            setLoginButtonActive(false)
+                            setLoginButtonHover(false)
+                        }}
 
                         onClick={(event) => loginBtnClickHandler()}
                         
@@ -323,7 +345,6 @@ export default function LoginPage() {
 
         { /* 后端地址配置按钮 */ }
         <FloatButton
-            type="primary"
             icon={ <LinkOutlined /> }
             onClick={() => {
                 showEditBackendModal()

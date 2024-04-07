@@ -10,3 +10,4 @@ import { UserManagementPage } from "./user-management/UserManagement";
 export default abstract class GroupsSubPages {
     static UserManagementPage = UserManagementPage
 }
+

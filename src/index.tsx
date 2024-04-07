@@ -11,7 +11,7 @@ import AppMain from './AppMain';
 import './index.css'
 import PageRouteManager from "./common/PageRoutes/PageRouteManager";
 import MacroDefines from "./common/MacroDefines";
-import { ConfigProvider } from "antd";
+import { ConfigProvider, theme } from "antd";
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
@@ -23,7 +23,7 @@ root.render(
             token: {
                 // 设置主题色。
                 colorPrimary: '#1677b3'
-            }
+            },
         }}
     >
         <AppMain />

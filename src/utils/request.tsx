@@ -14,6 +14,7 @@ import { message } from "antd"
 import { Navigate, useNavigate } from "react-router-dom"
 import { CookieBasedDataStore as DataStore } from "./CookieBasedDataStore"
 
+// local-data
 const vesperSession = {
     token: null as string | null
 }
@@ -54,6 +55,46 @@ function defaultUnauthorizedExceptionHandler() {
 }
 
 
+function vesperCenterNonOkResultDefaultHandler(res: IResponse) {
+    message.error(`${res.msg} (${res.code})`)
+}
+
+
+type VFRequestCtrlOptions = {
+
+    useDefaultUnauthorizedExceptionHandler?: boolean
+    useOriginalResult?: boolean
+    useDefaultNetworkExceptionHandler?: boolean
+
+    /**
+     * 仅限 vesper center api
+     */
+    autoHandleNonOKResults?: boolean
+
+    /**
+     * 仅限 vesper center api
+     */
+    rejectNonOKResults?: boolean
+
+    /**
+     * 仅限 vesper center api
+     */
+    giveResDataToCaller?: boolean
+}
+
+
+export type VFRequestParams = AxiosRequestConfig & { vfOpts?: VFRequestCtrlOptions }
+
+const vfRequestDefaultCtrlOptions: VFRequestCtrlOptions = {
+    useDefaultUnauthorizedExceptionHandler: true,
+    useOriginalResult: false,
+    useDefaultNetworkExceptionHandler: true,
+
+    autoHandleNonOKResults: false,
+    rejectNonOKResults: false,
+    giveResDataToCaller: false
+}
+
 /**
  * 果团团网络请求工具。
  * 对 axios 做二次封装，且内部处理后端环境配置。
@@ -76,13 +117,22 @@ function defaultUnauthorizedExceptionHandler() {
  * @param useDefaultNetworkExceptionHandler 当遇到网络异常或服务器异常时，是否执行默认处理逻辑。该选项默认开启。
  */
 export function request(
-    params: AxiosRequestConfig,
-    useDefaultUnauthorizedExceptionHandler: boolean = true,
-    useOriginalResult: boolean = false,
-    useDefaultNetworkExceptionHandler: boolean = true
+    params: VFRequestParams
 ): Promise< IResponse | AxiosResponse<any, any> > {
 
-    /** 访问的是否是我们自己的后端 api。我们自己的后端 api 只会返回 IResponse Json 数据。 */
+    /* 请求参数处理 */
+
+    const vfOpts = { ...vfRequestDefaultCtrlOptions }
+    if (params.vfOpts !== undefined) {
+        Object.keys(vfOpts).forEach(key => {
+            let optValue = (params.vfOpts as any)[key]
+            if (optValue !== undefined) {
+                (vfOpts as any)[key] = optValue
+            }
+        })
+    }
+
+    /* 访问的是否是我们自己的后端 api。我们自己的后端 api 只会返回 IResponse Json 数据。 */
     let isQueryOurApi: boolean
 
     // 识别传入的 url。
@@ -113,58 +163,72 @@ export function request(
         axios.request(params).then(res => {
             // axios 请求成功。
 
-            if (isQueryOurApi && !useOriginalResult) {
+            if (isQueryOurApi && !vfOpts.useOriginalResult && res.status === HttpStatusCode.OK) {
                 // 如果请求的是我们自己的api，并且需要做预处理...
 
-                if (res.status == HttpStatusCode.OK) {
-                    // 果团后端正常情况会无脑标记 http 状态为 200.
+                // 果团后端正常情况会无脑标记 http 状态为 200.
 
-                    let response = res.data as IResponse
+                let response = res.data as IResponse
 
-                    if (response.code == HttpStatusCode.UNAUTHORIZED) {
-                        // 鉴权异常。未登录。
-                        if (useDefaultUnauthorizedExceptionHandler) {
-                            defaultUnauthorizedExceptionHandler()
-                        }
-
-                        reject(response)
-                        
-                    } else {
-
-                        // 拦截 vesper session token
-                        if (isQueryOurApi) {
-                            let token = res.headers[VESPER_SESSION_HTTP_HEADER_KEY]
-                            
-                            if (token !== undefined) {
-                                vesperSession.token = token
-                                DataStore.put(VESPER_SESSION_TOKEN_DATASTORE_KEY, token)
-                            }
-                        }
-
-                        resolve(response)
-                    }
-                } else {
-                    // 如果果团后端的 http 状态非 200，说明后端出现异常。
-
-                    if (useDefaultNetworkExceptionHandler) {
-                        defaultNetworkExceptionHandler(false)
+                if (response.code === HttpStatusCode.UNAUTHORIZED) {
+                    // 鉴权异常。未登录。
+                    if (vfOpts.useDefaultUnauthorizedExceptionHandler) {
+                        defaultUnauthorizedExceptionHandler()
                     }
 
-                    reject(res)
-                    
+                    reject(response)
+                    return
                 }
 
+                // 拦截 vesper session token
+                if (isQueryOurApi) {
+                    let token = res.headers[VESPER_SESSION_HTTP_HEADER_KEY]
+                    
+                    if (token !== undefined) {
+                        vesperSession.token = token
+                        DataStore.put(VESPER_SESSION_TOKEN_DATASTORE_KEY, token)
+                    }
+                }
+
+                if (response.code === HttpStatusCode.OK) {
+                    resolve(vfOpts.giveResDataToCaller ? response.data : response)
+                    return
+                }
+
+                // now, vesper-center's status code is not 200+OK
+
+                if (vfOpts.autoHandleNonOKResults) {
+                    vesperCenterNonOkResultDefaultHandler(response)
+                }
+
+                if (vfOpts.rejectNonOKResults) {
+                    reject(response)
+                } else {
+                    resolve(vfOpts.giveResDataToCaller ? response.data : response)
+                }                
+                
+                    
+            } else if (isQueryOurApi && !vfOpts.useOriginalResult) {
+                // now, http request's status code is not 200+OK
+                // 如果果团后端的 http 状态非 200，说明后端出现异常。
+
+                if (vfOpts.useDefaultNetworkExceptionHandler) {
+                    defaultNetworkExceptionHandler(false)
+                }
+
+                reject(res)
             } else {
-
-                // 如果访问的是外部 api，或已经要求不做预处理。
+            
+                // 访问的是外部 api，或已经要求不做预处理。
+                // 直接返回就行
                 resolve(res)
-
             }
+            
         }).catch(err => {
             
             // axios 请求异常。
 
-            if (useDefaultNetworkExceptionHandler) {
+            if (vfOpts.useDefaultNetworkExceptionHandler) {
                 defaultNetworkExceptionHandler(true)
             }
 
@@ -172,4 +236,4 @@ export function request(
             
         })
     })
-}
+} // function request

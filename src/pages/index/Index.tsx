@@ -14,11 +14,19 @@ import { Link } from "react-router-dom";
 
 import styles from './Index.module.css'
 import { ensureGlobalData } from "../../common/GlobalData";
-import { message } from "antd";
+import { Typography, message } from "antd";
+import { homePageLyrics } from "./Lyrics";
+import Random from "../../utils/Random";
+
+const { Title, Text } = Typography
 
 
 interface IndexPageState {
 
+}
+
+const data = {
+    lyric: homePageLyrics[0]  // will be randomly set by the constructor.
 }
 
 export function IndexPage() {
@@ -33,6 +41,7 @@ export function IndexPage() {
     useConstructor(constructor)
     function constructor() {
 
+        data.lyric = Random.randElement(homePageLyrics)
         loadPageToLayoutFrame(pageEntity)
 
         ensureGlobalData()
@@ -76,7 +85,7 @@ export function IndexPage() {
 
             <div style={{ width: '0.4em' }} />
 
-            落霞前厅
+            <div>落霞前厅</div>
             
         </div>
 
@@ -147,6 +156,19 @@ export function IndexPage() {
 
         } </div>
 
+
+        { /* 页脚歌词 */ }
+        <div
+            style={{
+                color: '#0007',
+                position: 'absolute',
+                bottom: 8,
+                fontSize: 'smaller',
+                whiteSpace: 'pre-wrap'
+            }}
+        >
+            { `${data.lyric.lyric}    ——《${data.lyric.song}》${data.lyric.artist}` }
+        </div>
         
     </div>
 }

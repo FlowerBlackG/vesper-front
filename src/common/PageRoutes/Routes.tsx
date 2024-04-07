@@ -10,6 +10,7 @@ import GroupsPage from "../../pages/groups/Groups"
 import GroupsSubPages from "../../pages/groups/GroupsSubPages"
 import { IndexPage } from "../../pages/index/Index"
 import InitPage from "../../pages/init/Init"
+import LoginPageBackgroundGalleryPage from "../../pages/login-page-background-gallery/LoginPageBackgroundGallery"
 import LoginPage from "../../pages/login/Login"
 import MyPermissionsPage from "../../pages/my-permissions/MyPermissions"
 import MyProfilePage from "../../pages/my-profile/MyProfile"
@@ -161,6 +162,15 @@ export default class PageRoutes {
             name: '系统负载',
             icon: FluentUIEmojiProxy.colorSvg('fire_color'),
             element: <SystemLoadPage />,
+            category: categoryKeys.vesperCenterControlPanel,
+        },
+
+
+        {
+            path: '/login-page-background-gallery',
+            name: '画廊',
+            icon: FluentUIEmojiProxy.colorSvg('camera_color'),
+            element: <LoginPageBackgroundGalleryPage />,
             category: categoryKeys.vesperCenterControlPanel,
         },
     

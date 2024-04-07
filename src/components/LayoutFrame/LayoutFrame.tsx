@@ -12,9 +12,12 @@ import { request } from '../../utils/request';
 import MacroDefines from '../../common/MacroDefines';
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
-import { Button, Menu, Spin, message } from 'antd';
+import { Button, Flex, Menu, Spin, Typography, message } from 'antd';
 import { ArrowLeftOutlined, LogoutOutlined } from '@ant-design/icons';
 import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
+
+
+const { Text, Title, Paragraph } = Typography
 
 
 export type LayoutFrameHandle = {
@@ -218,7 +221,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
                     marginRight: '0.4em'
-                    }}>
+                }}>
                     { globalData.userEntity?.username }
                 </div>
             </div>
@@ -321,15 +324,13 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
 
     /* 渲染。 */
 
-    return <div style={{
+    return <Flex style={{
         position: 'absolute',
         left: 0,
         top: 0,
         width: '100%',
         height: '100%',
-        display: 'flex',
-        flexDirection: 'row',
-        overflow: 'hidden'
+        overflow: 'hidden',
     }}>
 
         { /* 侧边栏区域。 */ }
@@ -359,7 +360,7 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
 
         { /* 页面跳转。 */ }
 
-    </div>
+    </Flex>
 
 })
 

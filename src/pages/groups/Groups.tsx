@@ -4,7 +4,7 @@
  * 创建于 2024年3月28日 上海市嘉定区
  */
 
-import { Button, FloatButton, Input, Modal, Popover, Table, Tooltip, message } from "antd";
+import { Button, FloatButton, Input, Modal, Popover, Spin, Table, Tooltip, message } from "antd";
 import { ensureGlobalData, globalData, globalHooks } from "../../common/GlobalData";
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager";
 import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame";
@@ -17,6 +17,7 @@ import { Typography } from "antd"
 import { IResponse, request } from "../../utils/request";
 import { HttpStatusCode } from "../../utils/HttpStatusCode";
 import DateTimeUtils from "../../utils/DateTimeUtils";
+import { useSearchParams } from "react-router-dom";
 
 const { Title, Text } = Typography
 const { TextArea } = Input
@@ -43,6 +44,10 @@ export default function GroupsPage() {
     // set to null so the modal will not shown.
     const [groupToBeRemoved, setGroupToBeRemoved] = useState<any>(null)
     const [removeGroupConfirmTextTyped, setRemoveGroupConfirmTextTyped] = useState("")
+
+    /* hooks */
+
+    const [searchParams, setSearchParams] = useSearchParams()
 
     /* constructor */
 
@@ -117,7 +122,7 @@ export default function GroupsPage() {
                     margin: 4,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
                 } as React.CSSProperties
 
                 if (hasPermission(record.id, GroupPermission.ADD_OR_REMOVE_USER)) {
@@ -130,7 +135,11 @@ export default function GroupsPage() {
 
                                 icon={ <UserOutlined /> }
                                 onClick={() => {
-                                    globalHooks.app.navigate!({ pathname: '/groups/user-management' })
+                                    globalHooks.app.navigate!({ 
+                                        pathname: '/groups/user-management',
+                                        search: `groupId=${record.id}`
+                                        
+                                    })
                                 }}
                             />
                         </Tooltip>
@@ -156,7 +165,16 @@ export default function GroupsPage() {
                     )
                 }
 
-                return buttons
+                return <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'flex-start',
+                        flexWrap: 'wrap',
+                    }}
+                >
+                    { buttons }
+                </div>
             }
         }
     ] as any[]
@@ -349,7 +367,7 @@ export default function GroupsPage() {
         display: 'flex',
         flexDirection: 'column',
         
-    }}>
+    }}><Spin spinning={pageLoading}>
 
         { /* floating components */ }
         { addGroupFloatingButton() }
@@ -359,6 +377,6 @@ export default function GroupsPage() {
         { groupsTable() }
 
 
-    </div>
+    </Spin></div>
 
 }

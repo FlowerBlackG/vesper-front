@@ -5,7 +5,7 @@
     创建于2024年3月27日 上海市嘉定区
 */
 
-import { Spin, message } from 'antd'
+import { Button, Spin, Table, message } from 'antd'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import { loadPageToLayoutFrame, setLayoutFrameTitle } from '../../components/LayoutFrame/LayoutFrame'
 import { useConstructor } from '../../utils/react-functional-helpers'
@@ -44,6 +44,7 @@ export default function SeatsPage() {
 
     /* states */
     const [dataLoading, setDataLoading] = useState(false)
+    const [tableDataSource, setTableDataSource] = useState([] as any[])
 
     /* constructor */
     useConstructor(constructor)
@@ -61,7 +62,106 @@ export default function SeatsPage() {
         }).catch(err => {})
     }
 
+    /* table columns */
 
+    const tableColumns = [
+        {
+            title: 'id',
+            dataIndex: 'id',
+            key: 'id',
+        },
+        {
+            title: '操作',
+            key: 'user-op',
+            render(_: any, record: any) {
+                let buttons = []
+
+                buttons.push(
+                    <Button
+                        onClick={() => {
+                            request({
+                                url: 'seat/start',
+                                method: 'post',
+                                data: {
+                                    seatId: record.id
+                                },
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true,
+                                }
+                            }).then(res => {
+                                console.log('seat/start')
+                                console.log(res)
+                                message.success('seat/start')
+                            }).catch(err => {})
+                        }}
+                    >
+                        开机
+                    </Button>
+                )
+
+
+                buttons.push(
+                    <Button
+                        onClick={() => {
+                            request({
+                                url: 'seat/launchVesper',
+                                method: 'post',
+                                data: {
+                                    seatId: record.id
+                                },
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true,
+                                }
+                            }).then(res => {
+                                console.log('seat/launchVesper')
+                                console.log(res)
+                                message.success('seat/launchVesper')
+                            
+                            }).catch(err => {})
+                            
+                        }}
+                    >
+                        启动 vesper
+                    </Button>
+                )
+
+
+                buttons.push(
+                    <Button
+                        onClick={() => {
+                            request({
+                                url: 'seat/shutdown',
+                                method: 'post',
+                                data: {
+                                    seatId: record.id
+                                },
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true,
+                                }
+                            }).then(res => {
+                                console.log('seat/shutdown')
+                                console.log(res)
+                                message.success('seat/shutdown')
+                            }).catch(err => {})
+                            
+                        }}
+                    >
+                        关机
+                    </Button>
+                )
+
+                return <div>
+                    {buttons}
+                </div>
+            }
+        }
+    ]
 
 
     /* methods */
@@ -85,7 +185,7 @@ export default function SeatsPage() {
 
 
     function loadData(data: SeatEntity[]) {
-
+        setTableDataSource(data)
     }
 
 
@@ -100,11 +200,15 @@ export default function SeatsPage() {
             position: 'absolute',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
         }}
     ><Spin spinning={ dataLoading }>
-123
+
+
+        <Table
+            columns={tableColumns}
+            dataSource={tableDataSource}
+        />
+
     </Spin></div>
     
 
