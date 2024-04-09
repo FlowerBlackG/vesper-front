@@ -24,11 +24,14 @@ export interface UserEntity {
 export interface SeatEntity {
     id: number
     userId: number
+    groupId: number
     creator: number
     enabled: number
+    nickname: string
     linuxUid: number
     linuxLoginName: number
     linuxPasswdRaw: number
+    note: string
     createTime: string
     lastLoginTime: string
 }

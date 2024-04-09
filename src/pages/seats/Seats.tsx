@@ -14,7 +14,7 @@ import styles from './MySeats.module.css'
 import { useState } from 'react'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import { SeatEntity } from '../../api/Entities'
-import { ensureGlobalData } from '../../common/GlobalData'
+import { ensureGlobalData, globalHooks } from '../../common/GlobalData'
 import { useSearchParams } from 'react-router-dom'
 
 
@@ -66,9 +66,30 @@ export default function SeatsPage() {
 
     const tableColumns = [
         {
-            title: 'id',
+            title: '主机编号',
             dataIndex: 'id',
             key: 'id',
+            render: (_: any, record: SeatEntity) => {
+                return `${record.nickname} (${record.id})`
+            }
+        },
+        {
+            title: '组号',
+            dataIndex: 'groupId',
+            key: 'groupId',
+        },
+        {
+            title: 'linux账户',
+            dataIndex: 'linuxUid',
+            key: 'linuxUid',
+            render: (_: any, record: SeatEntity) => {
+                return `${record.linuxLoginName} (${record.linuxUid})`
+            }
+        },
+        {
+            title: '备注',
+            dataIndex: 'note',
+            key: 'note'
         },
         {
             title: '操作',
@@ -76,6 +97,7 @@ export default function SeatsPage() {
             render(_: any, record: any) {
                 let buttons = []
 
+                if (0)
                 buttons.push(
                     <Button
                         onClick={() => {
@@ -102,6 +124,7 @@ export default function SeatsPage() {
                 )
 
 
+                if (0)
                 buttons.push(
                     <Button
                         onClick={() => {
@@ -130,6 +153,7 @@ export default function SeatsPage() {
                 )
 
 
+                if (0)
                 buttons.push(
                     <Button
                         onClick={() => {
@@ -156,6 +180,19 @@ export default function SeatsPage() {
                     </Button>
                 )
 
+                buttons.push(
+                    <Button type='primary' shape='round'
+                        onClick={() => {
+                            globalHooks.app.navigate!({
+                                pathname: '/seats/detail',
+                                search: `seatId=${record.id}`
+                            })
+                        }}
+                    >
+                        进入
+                    </Button>
+                )
+
                 return <div>
                     {buttons}
                 </div>
@@ -175,6 +212,7 @@ export default function SeatsPage() {
                 message.error(res.msg)
                 return
             }
+            console.log(res)
 
             loadData(res.data as SeatEntity[])
         }).catch(err => {})

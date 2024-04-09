@@ -15,6 +15,7 @@ import LoginPage from "../../pages/login/Login"
 import MyPermissionsPage from "../../pages/my-permissions/MyPermissions"
 import MyProfilePage from "../../pages/my-profile/MyProfile"
 import SeatsPage from "../../pages/seats/Seats"
+import SeatsSubPages from "../../pages/seats/SeatsSubPages"
 import SystemLoadPage from "../../pages/system-load/SystemLoad"
 import UserManagementPage from "../../pages/user-management/UserManagement"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
@@ -119,6 +120,18 @@ export default class PageRoutes {
             icon: FluentUIEmojiProxy.colorSvg('national_park_color'),
             inFrame: true,
             showInSidebar: true,
+            category: categoryKeys.seat
+        },
+
+        {
+            path: '/seats/detail',
+            name: '详细',
+            element: <SeatsSubPages.DetailPage />,
+            icon: FluentUIEmojiProxy.colorSvg('national_park_color'),
+            inFrame: true,
+            showInSidebar: false,
+            showInHomePage: false,
+            showBackButton: true,
             category: categoryKeys.seat
         },
 

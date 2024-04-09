@@ -51,6 +51,11 @@ export default class CSVSheet {
 
         let res = [] as string[]
         for (let row of this.cells) {
+
+            if (row === this.cells[0]) {
+                continue  // skip first row
+            }
+
             let content = row[colIdx]
             if (skipEmpty && content.length === 0) {
                 continue

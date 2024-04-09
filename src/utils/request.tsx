@@ -118,7 +118,7 @@ const vfRequestDefaultCtrlOptions: VFRequestCtrlOptions = {
  */
 export function request(
     params: VFRequestParams
-): Promise< IResponse | AxiosResponse<any, any> > {
+): Promise< IResponse | AxiosResponse<any, any> | any > {
 
     /* 请求参数处理 */
 
