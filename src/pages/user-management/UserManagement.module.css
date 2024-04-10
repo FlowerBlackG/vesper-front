@@ -6,3 +6,16 @@
 */
 
 @import '../../index.css';
+
+
+.tableRow:nth-child(odd) {
+    background-color: #c6e6e8a0;
+}
+
+.tableRow:nth-child(even) {
+
+}
+
+.tableCell {
+    
+}

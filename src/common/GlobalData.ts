@@ -4,26 +4,19 @@
 import React, { useRef } from "react"
 import { HttpStatusCode } from "../utils/HttpStatusCode"
 import { IResponse, request } from "../utils/request"
-import LayoutFrame, { LayoutFrameHandle } from "../components/LayoutFrame/LayoutFrame"
 import { GroupPermissionEntity, GroupPermissionGrantEntity, UserEntity } from "../api/Entities"
 import { Permission } from "../api/Permissions"
 import { message } from "antd"
-import { NavigateFunction } from "react-router-dom"
+import { NavigateFunction, NavigateOptions, To } from "react-router-dom"
 import { GroupPermissionStore, PermissionStore } from "./PermissionStore"
 import { later } from "../utils/later"
+import { PageRouteData } from "./PageRoutes/TypeDef"
 
 /**
  * 全局变量。
  */
 
 export const globalData = {
-
-
-    /** 
-     * 指向边框对象的引用。 
-     * 在 PageRoutes::preprocess 内设置。
-     */
-    layoutFrameRef: null as React.RefObject<LayoutFrameHandle> | null,
 
     userEntity: null as UserEntity | null,
     userPermissions: new PermissionStore,
@@ -32,9 +25,54 @@ export const globalData = {
 }
 
 
-export const globalHooks = {
+export const globalHooksRegistry = {
     app: {
         navigate: null as NavigateFunction | null
+    },
+
+    layoutFrame: {
+        setDataLoading: null as ((loading: boolean) => void) | null,
+        setCurrentPageEntity: null as ((e: PageRouteData) => void) | null,
+        setTitle: null as ((s: string) => void) | null,
+        forceUpdate: null as (() => void) | null
+    }
+}
+
+
+export const globalHooks = {
+    app: {
+        // buggy, but fixed in components/GlobalNavigate.tsx
+        navigate: globalHooksRegistry.app.navigate as NavigateFunction
+    },
+
+    layoutFrame: {
+        setDataLoading: (loading: boolean) => {
+            const f = globalHooksRegistry.layoutFrame.setDataLoading
+            if (f) {
+                f(loading)
+            }
+        },
+
+        setCurrentPageEntity: (entity: PageRouteData) => {
+            const f = globalHooksRegistry.layoutFrame.setCurrentPageEntity
+            if (f) {
+                f(entity)
+            }
+        },
+
+        setTitle: (title: string) => {
+            const f = globalHooksRegistry.layoutFrame.setTitle
+            if (f) {
+                f(title)
+            }
+        },
+
+        forceUpdate: () => {
+            const f = globalHooksRegistry.layoutFrame.forceUpdate
+            if (f) {
+                f()
+            }
+        }
     }
 }
 
@@ -197,12 +235,10 @@ function loadBasicInfo() {
     
             res = res as IResponse
     
-            if (res.code == HttpStatusCode.OK) {
+            if (res.code === HttpStatusCode.OK) {
     
                 globalData.userEntity = res.data
-
-                globalData.layoutFrameRef?.current?.update()
-
+                globalHooks.layoutFrame.forceUpdate()
                 resolve(null)
             } else {
                 message.warning(res.code + res.msg)
@@ -229,12 +265,12 @@ function loadPermissions() {
             if (res.code === HttpStatusCode.OK) {
     
                 globalData.userPermissions.clear()
-                for (let obj of res.data) {
-                    globalData.userPermissions.put(obj.permissionId)
+                for (let it of res.data) {
+                    globalData.userPermissions.put(it)
                 }
     
                 globalData.userPermissions.ready = true
-                globalData.layoutFrameRef?.current?.update()
+                globalHooks.layoutFrame.forceUpdate()
 
                 resolve(null)
             } else {
@@ -262,7 +298,7 @@ function loadGroupPermissions() {
                 }
 
                 globalData.groupPermissions.ready = true
-                globalData.layoutFrameRef?.current?.update()
+                globalHooks.layoutFrame.forceUpdate()
 
                 resolve(null)
             } else {

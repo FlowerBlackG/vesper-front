@@ -6,7 +6,7 @@ import React, { ForwardedRef, forwardRef, useEffect, useImperativeHandle, useLay
 import { Navigate, useNavigate } from 'react-router-dom';
 import { FreeKeyObject } from '../../utils/FreeKeyObject';
 import styles from './LayoutFrame.module.css'
-import { globalData, resetGlobalData } from '../../common/GlobalData';
+import { globalData, globalHooks, globalHooksRegistry, resetGlobalData } from '../../common/GlobalData';
 import URLNavigate from '../../utils/URLNavigate';
 import { request } from '../../utils/request';
 import MacroDefines from '../../common/MacroDefines';
@@ -15,33 +15,16 @@ import { useConstructor } from '../../utils/react-functional-helpers';
 import { Button, Flex, Menu, Spin, Typography, message } from 'antd';
 import { ArrowLeftOutlined, LogoutOutlined } from '@ant-design/icons';
 import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
+import { later } from '../../utils/later';
 
 
 const { Text, Title, Paragraph } = Typography
 
 
-export type LayoutFrameHandle = {
-    setDataLoading: (loading: boolean) => void
-    setCurrentPageEntity: (entity: PageRouteData) => void
-    setTitle: (title: string) => void
-    update: () => void
-}
-
-const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
+export default function LayoutFrame(
     props: React.PropsWithChildren,
     ref: ForwardedRef<any>
-) => {
-
-    
-    /**
-     * 函数导出
-     */
-    useImperativeHandle(ref, () => ({
-        setDataLoading,
-        setCurrentPageEntity,
-        setTitle,
-        update,
-    }))
+) {
 
 
     /* states */
@@ -57,6 +40,14 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
 
     useConstructor(constructor)
     function constructor() {
+
+        const hooks = globalHooksRegistry.layoutFrame
+        hooks.setDataLoading = setDataLoading
+        hooks.setCurrentPageEntity = setCurrentPageEntity
+        hooks.setTitle = setTitle
+        hooks.forceUpdate = update
+        
+
         loadMenu()
     }
 
@@ -163,18 +154,6 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
         setMenuItems(items)
         
     }
-
-
-    useEffect(() => {
-        if (currentRouteEntity !== undefined) {
-            setCurrentPageEntity(currentRouteEntity)
-        }
-
-        if (pageTitle !== undefined) {
-            setTitle(pageTitle)
-        }
-        
-    }, [])
 
     const navigate = useNavigate()
 
@@ -362,22 +341,23 @@ const LayoutFrame = forwardRef<LayoutFrameHandle, any>((
 
     </Flex>
 
-})
+}
 
-  
 
-let currentRouteEntity: PageRouteData | undefined = undefined
-let pageTitle: string | undefined = undefined
-
+/**
+ * 
+ * @deprecated use globalHooks.layoutFrame.setCurrentPageEntity instead.
+ */
 export function loadPageToLayoutFrame(entity: PageRouteData) {
-    currentRouteEntity = entity
-    pageTitle = entity.title
-    globalData.layoutFrameRef?.current?.setCurrentPageEntity(entity)
+    globalHooks.layoutFrame.setCurrentPageEntity(entity)
 }
 
+
+/**
+ * 
+ * @deprecated use globalHooks.layoutFrame.setTitle instead
+ */
 export function setLayoutFrameTitle(title: string) {
-    pageTitle = title
-    globalData.layoutFrameRef?.current?.setTitle(title)
+    globalHooks.layoutFrame.setTitle(title)
 }
 
-export default LayoutFrame

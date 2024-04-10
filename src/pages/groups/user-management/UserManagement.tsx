@@ -153,7 +153,6 @@ export function UserManagementPage() {
         }).then(res => {
             
             setTableDataSource(res as any)
-            console.log(res)
 
         }).catch(() => {})
         .finally(() => {
@@ -245,8 +244,7 @@ export function UserManagementPage() {
                                 }
                             }).then(res => {
                                 // todo
-                                console.log('create seat res')
-                                console.log(res)
+                                
                             }).catch(() => {}).finally(() => {
                                 setAddSeatDrawerOpen(false)
                             })

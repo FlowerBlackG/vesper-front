@@ -7,7 +7,6 @@
 import { Button, FloatButton, Input, Modal, Popover, Spin, Table, Tooltip, message } from "antd";
 import { ensureGlobalData, globalData, globalHooks } from "../../common/GlobalData";
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager";
-import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame";
 import { useConstructor } from "../../utils/react-functional-helpers";
 import { GroupPermission, Permission } from "../../api/Permissions";
 import { DeleteOutlined, GroupOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
@@ -54,9 +53,8 @@ export default function GroupsPage() {
     useConstructor(constructor)
     function constructor() {
         
+        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
         ensureGlobalData().then(() => {
-
-            loadPageToLayoutFrame(pageEntity)
             fetchData()
         
         }).catch(() => {})
@@ -158,7 +156,6 @@ export default function GroupsPage() {
                                 icon={ <DeleteOutlined /> }
                                 onClick={ () => {
                                     setGroupToBeRemoved(record)
-                                    console.log(groupToBeRemoved)
                                 }}
                             />
                         </Tooltip>

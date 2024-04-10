@@ -31,7 +31,7 @@ function preprocessRouteData(route: PageRouteData, pageRouteEntityMap: FreeKeyOb
     }
 
     if (route.inFrame) {
-        route.element = <LayoutFrame ref={ globalData.layoutFrameRef } >
+        route.element = <LayoutFrame>
             { route.element }
         </LayoutFrame>
     }

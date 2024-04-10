@@ -97,89 +97,6 @@ export default function SeatsPage() {
             render(_: any, record: any) {
                 let buttons = []
 
-                if (0)
-                buttons.push(
-                    <Button
-                        onClick={() => {
-                            request({
-                                url: 'seat/start',
-                                method: 'post',
-                                data: {
-                                    seatId: record.id
-                                },
-                                vfOpts: {
-                                    giveResDataToCaller: true,
-                                    rejectNonOKResults: true,
-                                    autoHandleNonOKResults: true,
-                                }
-                            }).then(res => {
-                                console.log('seat/start')
-                                console.log(res)
-                                message.success('seat/start')
-                            }).catch(err => {})
-                        }}
-                    >
-                        开机
-                    </Button>
-                )
-
-
-                if (0)
-                buttons.push(
-                    <Button
-                        onClick={() => {
-                            request({
-                                url: 'seat/launchVesper',
-                                method: 'post',
-                                data: {
-                                    seatId: record.id
-                                },
-                                vfOpts: {
-                                    giveResDataToCaller: true,
-                                    rejectNonOKResults: true,
-                                    autoHandleNonOKResults: true,
-                                }
-                            }).then(res => {
-                                console.log('seat/launchVesper')
-                                console.log(res)
-                                message.success('seat/launchVesper')
-                            
-                            }).catch(err => {})
-                            
-                        }}
-                    >
-                        启动 vesper
-                    </Button>
-                )
-
-
-                if (0)
-                buttons.push(
-                    <Button
-                        onClick={() => {
-                            request({
-                                url: 'seat/shutdown',
-                                method: 'post',
-                                data: {
-                                    seatId: record.id
-                                },
-                                vfOpts: {
-                                    giveResDataToCaller: true,
-                                    rejectNonOKResults: true,
-                                    autoHandleNonOKResults: true,
-                                }
-                            }).then(res => {
-                                console.log('seat/shutdown')
-                                console.log(res)
-                                message.success('seat/shutdown')
-                            }).catch(err => {})
-                            
-                        }}
-                    >
-                        关机
-                    </Button>
-                )
-
                 buttons.push(
                     <Button type='primary' shape='round'
                         onClick={() => {
@@ -212,7 +129,6 @@ export default function SeatsPage() {
                 message.error(res.msg)
                 return
             }
-            console.log(res)
 
             loadData(res.data as SeatEntity[])
         }).catch(err => {})

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MulanPSL-2.0 */
 
 import { useNavigate } from "react-router-dom"
-import { globalHooks } from "../common/GlobalData"
+import { globalHooks, globalHooksRegistry } from "../common/GlobalData"
 
 /*
 
@@ -9,6 +9,8 @@ import { globalHooks } from "../common/GlobalData"
 */
 
 export const GlobalNavigate = () => {
-    globalHooks.app.navigate = useNavigate()
+    globalHooksRegistry.app.navigate = useNavigate()
+    // globalHooks 里面的设计是有问题的。这里这样写来弥补 bug
+    globalHooks.app.navigate = globalHooksRegistry.app.navigate
     return null
 }

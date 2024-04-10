@@ -6,66 +6,73 @@
 */
 
 import React, { useState } from 'react'
-import { ensureGlobalData, globalData } from '../../common/GlobalData'
+import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
-import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame'
 import './UserManagement.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { Button, Card, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Table, TablePaginationConfig, message } from 'antd'
-import { UserEntity } from '../../api/Entities'
+import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, message } from 'antd'
+import { PermissionEntity, UserEntity } from '../../api/Entities'
 import { IResponse, request } from '../../utils/request'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import DateTimeUtils from '../../utils/DateTimeUtils'
 import { Permission } from '../../api/Permissions'
-import { InboxOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from '@ant-design/icons'
+import { CrownOutlined, CrownTwoTone, EyeOutlined, InboxOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from '@ant-design/icons'
 import XlsxUtils from '../../utils/XlsxUtils'
 import * as XLSX from 'xlsx'
 import Dragger from 'antd/es/upload/Dragger'
 import { RcFile } from 'antd/es/upload'
 import CSVSheet from '../../utils/CSVSheet'
-
-
-const tableColumns = [
-    {
-        title: '用户id',
-        dataIndex: 'id',
-        key: 'id'
-    },
-    {
-        title: '用户名',
-        dataIndex: 'username',
-        key: 'username'
-    },
-    {
-        title: '注册者',
-        dataIndex: 'creator',
-        key: 'creator',
-    },
-    {
-        title: '注册时间',
-        dataIndex: 'createTime',
-        key: 'createTime',
-        render: (it: string) => {
-            return DateTimeUtils.iso8601toHumanFriendly(it)
-        }
-    },
-    {
-        title: '上次登录时间',
-        dataIndex: 'lastLoginTime',
-        key: 'lastLoginTime',
-        render: (it: string | null) => {
-            if (it === null) {
-                return "未曾登录"
-            }
-
-            return DateTimeUtils.iso8601toHumanFriendly(it)
-        }
-    },
-]
+import { PermissionStore } from '../../common/PermissionStore'
+import styles from './UserManagement.module.css'
 
 
 export default function UserManagementPage() {
     const pageEntity = PageRouteManager.getRouteEntity('/user-management')
+
+    /* table columns */
+
+    const tableColumns = [
+        {
+            title: '用户id',
+            dataIndex: 'id',
+            key: 'id'
+        },
+        {
+            title: '用户名',
+            dataIndex: 'username',
+            key: 'username'
+        },
+        {
+            title: '注册者',
+            dataIndex: 'creator',
+            key: 'creator',
+        },
+        {
+            title: '注册时间',
+            dataIndex: 'createTime',
+            key: 'createTime',
+            render: (it: string) => {
+                return DateTimeUtils.iso8601toHumanFriendly(it)
+            }
+        },
+        {
+            title: '上次登录时间',
+            dataIndex: 'lastLoginTime',
+            key: 'lastLoginTime',
+            render: (it: string | null) => {
+                if (it === null) {
+                    return "未曾登录"
+                }
+
+                return DateTimeUtils.iso8601toHumanFriendly(it)
+            }
+        },
+        {
+            title: '操作',
+            key: 'op',
+            render: tableRowOperations
+        }
+    ]
 
     /* states */
 
@@ -78,15 +85,20 @@ export default function UserManagementPage() {
     const [tableDataSource, setTableDataSource] = useState<UserEntity[]>([])
     const [addUserDialogOpen, setAddUserDialogOpen] = useState(false)
     const [addUsersDialogOpen, setAddUsersDialogOpen] = useState(false)
-    const [addUserDialogConfirmLoading, setAddUserDialogConfirmLoading] = useState(false)
+
+    const [viewDetailUserId, setViewDetailUserId] = useState<number | null>(null)
 
     /* constructor */
 
     function constructor() {
-        loadPageToLayoutFrame(pageEntity)
+        
+        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
+
         ensureGlobalData().then(() => {
             loadTablePage(1, 10)
         }).catch(() => {})
+
+        
     }
     useConstructor(constructor)
 
@@ -118,95 +130,45 @@ export default function UserManagementPage() {
 
 
     /* render */
+
+    function tableRowOperations(_: any, user: UserEntity) {
+        let buttons = []
+
+        const hasPermission = (permission: Permission) => {
+            return globalData.userPermissions.contains(permission)
+        }
+
+        
+        buttons.push(
+            <Tooltip title='详细'>
+                <Button
+                    type='primary'
+                    shape='circle'
+                    icon={ <EyeOutlined /> }
+                    onClick={() => {
+                        setViewDetailUserId(user.id)
+                    }}
+                />
+            </Tooltip>
+        )
+    
+
+        return <div
+            style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                flexWrap: 'wrap',
+            }}
+        >
+            {buttons}
+        </div>
+    }
+
     
     function filter(): React.ReactNode {
         return ''
     }
-
-
-
-    const [addUserDialogForm] = Form.useForm()
-    function addUserDialog() {
-
-        const marginDiv = () => <div style={{height: 12}} />
-
-        return <Modal
-            title="添加新用户"
-            centered={true}
-            destroyOnClose={true}
-            open={addUserDialogOpen}
-            onCancel={() => setAddUserDialogOpen(false)}
-            confirmLoading={ addUserDialogConfirmLoading }
-            maskClosable={false}
-            onOk={() => {
-                addUserDialogForm
-                    .validateFields()
-                    .then(values => {
-
-                        let username = values.username as string
-                        setAddUserDialogConfirmLoading(true)
-                        request({
-                            url: 'user/createUsers',
-                            method: 'post',
-                            data: {
-                                newUsers: [
-                                    {
-                                        username: username
-                                    }
-                                ]
-                            }
-                        }).then(res => {
-                            res = res as IResponse
-                            if (res.code !== HttpStatusCode.OK) {
-                                message.error(res.msg)
-                                return
-                            }
-
-                            let entry = res.data[username]
-                            if (entry.success) {
-                                setAddUserDialogOpen(false)
-                                Modal.success({
-                                    title: "新用户：".concat(username),
-                                    content: "初始密码：".concat(entry.passwd),
-                                    centered: true,
-                                })
-                                loadTablePage()
-                            } else {
-                                Modal.error({
-                                    title: '创建失败！',
-                                    content: entry.msg,
-                                    centered: true
-                                })
-                            }
-                        }).catch(err => {})
-                        .finally(() => setAddUserDialogConfirmLoading(false))
-                    }) // addUserDialogForm.then
-                    .catch(info => {
-                        message.error(info)
-                    })
-            }}
-        >
-
-            <Form
-                form={addUserDialogForm}
-                preserve={false}
-            >
-                <Form.Item
-                    label="用户名"
-                    name="username"
-                >
-                    <Input />
-                </Form.Item>
-
-            </Form>
-
-        </Modal>
-    }
-
-
-    
-
-    
 
 
     return <div style={{
@@ -215,7 +177,7 @@ export default function UserManagementPage() {
         top: 0,
         left: 0,
         position: 'absolute'
-    }}><Spin spinning={loading}>
+    }} className='overflow-y-overlay'><Spin spinning={loading}>
         
         { /* 筛选器。 */ }
         { filter() }
@@ -248,16 +210,309 @@ export default function UserManagementPage() {
                 <FloatButton icon={<UsergroupAddOutlined />} type='default' onClick={ () => { setAddUsersDialogOpen(true) } } />
             </FloatButton.Group>
         }
-        { addUserDialog() }
+
+
+        <UserDetailDialog
+            onClose={() => {
+                setViewDetailUserId(null)
+            }}
+            userId={viewDetailUserId}
+        />
         
+
+        <AddSingleUserDialog
+            onCancel={() => {
+                setAddUserDialogOpen(false)
+                loadTablePage()
+            }}
+            open={addUserDialogOpen}
+        />
+          
         <AddUsersDialog 
             onClose={() => {
                 setAddUsersDialogOpen(false)
+                loadTablePage()
             }}
             open={addUsersDialogOpen}
         />
 
     </Spin></div>
+}
+
+
+
+/* ------------ User Detail Dialog ------------ */
+
+interface UserDetailDialogProps {
+    onClose: () => void
+    userId: number | null
+}
+
+function UserDetailDialog(props: UserDetailDialogProps) {
+
+    const [userEntity, setUserEntity] = useState<
+        (UserEntity 
+            & 
+            {
+                groupsIn: number, 
+                seatsOwned: number,
+                creatorEntity: UserEntity
+            }
+        ) 
+        | null
+    >(null)
+
+    const [allPermissions, setAllPermissions] = useState<PermissionEntity[]>([])
+    const [userPermissions, setUserPermissions] = useState<Permission[]>([])
+    const [grantPermissionLoading, setGrantPermissionLoading] = useState<Permission[]>([])
+
+    if (props.userId !== null && userEntity?.id !== props.userId) {
+        request({
+            url: 'user/userDetail',
+            params: {
+                targetUserId: props.userId
+            },
+            vfOpts: {
+                giveResDataToCaller: true,
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true
+            }
+        }).then(res => {
+            setUserEntity(res)
+        }).catch(_ => {}).finally(() => {
+
+        })
+
+        request({
+            url: 'user/userPermissions',
+            params: {
+                targetUserId: props.userId
+            },
+            vfOpts: {
+                giveResDataToCaller: true,
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true
+            }
+        }).then(res => {
+            setUserPermissions(res)
+        }).catch(_ => {})
+    }
+
+    if (allPermissions.length === 0) {
+        request({
+            url: 'user/allPermissions',
+            vfOpts: {
+                giveResDataToCaller: true,
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true
+            }
+        }).then(res => {
+            setAllPermissions(res)
+        }).catch(_ => {})
+    }
+
+
+    return <Drawer
+        open={props.userId !== null}
+        onClose={props.onClose}
+        size='large'
+        title={userEntity ? `${userEntity.username} (${userEntity.id})` : '请稍候'}
+    >
+        {
+            userEntity 
+            &&
+
+            <Descriptions bordered>
+                <Descriptions.Item label='用户名'
+                    children={ <b>{userEntity.username}</b> }
+                />
+                <Descriptions.Item label='用户ID'
+                    children={ userEntity.id }
+                />
+                <Descriptions.Item label='创建者'
+                    children={ `${userEntity.creatorEntity?.username} (${userEntity.creator})` }
+                />
+                <Descriptions.Item label='注册时间'
+                    children={ DateTimeUtils.iso8601toHumanFriendly(userEntity.createTime) }
+                />
+                <Descriptions.Item label='上次登录'
+                    children={ 
+                        userEntity.lastLoginTime 
+                        ? 
+                        DateTimeUtils.iso8601toHumanFriendly(userEntity.lastLoginTime) 
+                        :
+                        '未曾登录' 
+                    }
+                />
+                <Descriptions.Item label='所在群组数'
+                    children={userEntity.groupsIn}
+                />
+                <Descriptions.Item label='桌面环境数'
+                    children={userEntity.seatsOwned}
+                />
+            </Descriptions>
+        }
+
+        <Divider />
+        <p><b>权限</b></p>
+
+        <table rules='none' cellPadding={12}>
+            {
+                allPermissions.map((it) => {
+                    return <tr className={styles.tableRow}> 
+                        <td className={styles.tableCell}>{it.id}</td>
+                        <td className={styles.tableCell}>{it.enumKey}</td>
+                        
+                        <td className={styles.tableCell}>
+                            {it.note}
+                        </td>
+                        <td className={styles.tableCell}>
+                            <Switch
+                                disabled={ 
+                                    !globalData.userPermissions.contains(Permission.GRANT_PERMISSION)
+                                }
+                                checked={
+                                    userPermissions.includes(it.id)
+                                }
+                                loading={
+                                    grantPermissionLoading.includes(it.id)
+                                }
+                                onChange={(checked: boolean, event: any) => {
+                                    if (!grantPermissionLoading.includes(it.id)) {
+                                        grantPermissionLoading.push(it.id)
+                                        setGrantPermissionLoading([...grantPermissionLoading])
+                                    }
+
+                                    request({
+                                        url: 'user/grantPermission',
+                                        data: {
+                                            permission: it.id,
+                                            grant: checked,
+                                            targetUserId: props.userId
+                                        },
+                                        method: 'post'
+                                    }).then(res => {
+                                        res = res as IResponse
+                                        if (res.code !== HttpStatusCode.OK) {
+                                            message.error(res.msg)
+                                            return
+                                        }
+
+                                        message.success('赋权编辑成功')
+                                        if (checked) {
+                                            userPermissions.push(it.id)
+                                        } else {
+                                            userPermissions.splice(
+                                                userPermissions.indexOf(it.id), 1
+                                            )
+                                        }
+                                        setUserPermissions([...userPermissions])
+
+                                    }).catch(_ => {}).finally(() => {
+                                        grantPermissionLoading.splice(
+                                            grantPermissionLoading.indexOf(it.id), 1
+                                        )
+                                        setGrantPermissionLoading([...grantPermissionLoading])
+                                    })
+                                }}
+                            />
+                        </td>
+                    </tr>
+                })
+            }
+        </table>
+        
+        <div style={{ height: 16 }} />
+    </Drawer>
+}
+
+
+
+/* ------------ Add Single User Dialog ------------ */
+
+interface AddSingleUserDialogProps {
+    open: boolean
+    onCancel: () => void
+}
+
+function AddSingleUserDialog(props: AddSingleUserDialogProps) {
+
+    const [confirmLoading, setConfirmLoading] = useState(false)
+
+    const marginDiv = () => <div style={{height: 12}} />
+
+    const [addUserDialogForm] = Form.useForm()
+
+    return <Modal
+        title="添加新用户"
+        centered={true}
+        destroyOnClose={true}
+        open={props.open}
+        onCancel={props.onCancel}
+        confirmLoading={ confirmLoading }
+        maskClosable={false}
+        onOk={() => {
+            addUserDialogForm
+                .validateFields()
+                .then(values => {
+
+                    let username = values.username as string
+                    setConfirmLoading(true)
+                    request({
+                        url: 'user/createUsers',
+                        method: 'post',
+                        data: {
+                            newUsers: [
+                                {
+                                    username: username
+                                }
+                            ]
+                        }
+                    }).then(res => {
+                        res = res as IResponse
+                        if (res.code !== HttpStatusCode.OK) {
+                            message.error(res.msg)
+                            return
+                        }
+
+                        let entry = res.data[username] as AddUsersUserEntity
+                        if (entry.result === 'created') {
+                            props.onCancel()
+                            Modal.success({
+                                title: "新用户：".concat(username),
+                                content: `初始密码：${entry.passwd}`,
+                                centered: true,
+                            })
+                        } else {
+                            Modal.error({
+                                title: '创建失败！',
+                                content: entry.resultMsg,
+                                centered: true
+                            })
+                        }
+                    }).catch(err => {})
+                    .finally(() => setConfirmLoading(false))
+                }) // addUserDialogForm.then
+                .catch(info => {
+                    message.error(info)
+                })
+        }}
+    >
+
+        <Form
+            form={addUserDialogForm}
+            preserve={false}
+        >
+            <Form.Item
+                label="用户名"
+                name="username"
+            >
+                <Input />
+            </Form.Item>
+
+        </Form>
+
+    </Modal>
 }
 
 

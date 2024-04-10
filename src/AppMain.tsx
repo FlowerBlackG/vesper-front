@@ -11,13 +11,10 @@ import { BrowserRouter, HashRouter, Route, Routes, useNavigate } from 'react-rou
 import MacroDefines from './common/MacroDefines' 
 import PageRouteManager from './common/PageRoutes/PageRouteManager' 
 import { globalData } from './common/GlobalData'
-import { LayoutFrameHandle } from './components/LayoutFrame/LayoutFrame'
 import { useConstructor } from './utils/react-functional-helpers'
 import { GlobalNavigate } from './components/GlobalNavigate'
 
 export default function AppMain() {
-
-    globalData.layoutFrameRef = useRef<LayoutFrameHandle>(null)
 
     useConstructor(constructor)
     function constructor() {

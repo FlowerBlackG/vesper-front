@@ -15,7 +15,7 @@ import { useSearchParams } from "react-router-dom"
 import { Button, Card, Descriptions, Flex, Space, Spin, message } from "antd"
 import styles from './Detail.module.css'
 import DateTimeUtils from "../../../utils/DateTimeUtils"
-import { DesktopOutlined, PlayCircleOutlined, PoweroffOutlined } from "@ant-design/icons"
+import { DesktopOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
 
 
 
@@ -52,6 +52,8 @@ export default function DetailPage() {
     const [vncIPAddr, setVncIPAddr] = useState('0.0.0.0')
     const [vncPasswd, setVncPasswd] = useState('******')
     
+    const [vncConnInfoRefreshing, setVncConnInfoRefreshing] = useState(false)
+
 
     /* ctor */
     function constructor() {
@@ -124,7 +126,6 @@ export default function DetailPage() {
                 autoHandleNonOKResults: true
             }
         }).then(res => {
-            console.log(res)
             setSeatEntity(res)
         }).catch(err => {}).finally(() => {
             setSeatEntityLoading(false)
@@ -255,8 +256,6 @@ export default function DetailPage() {
 
     function seatInfo() {
 
-        
-
         return <Flex vertical>
 
             <center style={{ marginTop: 8 }}>
@@ -352,6 +351,43 @@ export default function DetailPage() {
                 label='临时密码'
                 children={`${vncPasswd}`}
             />
+            <Descriptions.Item
+                label='刷新信息'
+                children={
+                    <Button
+                        icon={<ReloadOutlined />}
+                        shape="circle"
+                        type="primary"
+                        ghost
+                        disabled={vncConnInfoRefreshing}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                        onClick={() => {
+                            setVncConnInfoRefreshing(true)
+                            request({
+                                url: 'seat/vncConnectionInfo',
+                                params: {
+                                    seatId: seatId
+                                },
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true
+                                }
+                            }).then(res => {
+                                setVncIPAddr(res.vesperIP)
+                                setVncPort(res.vesperPort)
+                                setVncPasswd(res.vncPassword)
+                            }).catch(err => {}).finally(() => {
+                                setVncConnInfoRefreshing(false)
+                            })
+                        }}
+                    />
+                }
+            />
         </Descriptions>
     }
 
@@ -366,6 +402,8 @@ export default function DetailPage() {
                 disabled={!opBtnReady}
                 icon={ <PlayCircleOutlined /> }
                 onClick={() => {
+                    setLinuxLoginStatus('unknown')
+                    setVesperLauncherStatus('unknown')
                     setOpBtnReady(false)
                     request({
                         url: 'seat/start',
@@ -397,6 +435,8 @@ export default function DetailPage() {
                 icon={ <DesktopOutlined /> }
                 onClick={() => {
                     setOpBtnReady(false)
+                    setVesperCoreStatus('unknown')
+                    setVesperLauncherStatus('unknown')
                     request({
                         url: 'seat/launchVesper',
                         method: 'post',
@@ -428,6 +468,9 @@ export default function DetailPage() {
                 disabled={!opBtnReady}
                 icon={ <PoweroffOutlined /> }onClick={() => {
                     setOpBtnReady(false)
+                    setLinuxLoginStatus('unknown')
+                    setVesperLauncherStatus('unknown')
+                    setVesperCoreStatus('unknown')
                     request({
                         url: 'seat/shutdown',
                         method: 'post',
