@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: MulanPSL-2.0 */
-
-import { useNavigate } from "react-router-dom"
-import { globalHooks, globalHooksRegistry } from "../common/GlobalData"
-
 /*
 
     创建于2024年3月13日 上海市嘉定区
 */
+
+import { useNavigate } from "react-router-dom"
+import { globalHooks, globalHooksRegistry } from "../common/GlobalData"
+
 
 export const GlobalNavigate = () => {
     globalHooksRegistry.app.navigate = useNavigate()

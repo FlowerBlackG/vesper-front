@@ -25,6 +25,12 @@ export const homePageLyrics = [
         song: '涉川'
     },
 
+    {
+        lyric: '东船西舫悄无言 唯见江心秋月白',
+        artist: '白居易',
+        song: '琵琶行'
+    },
+
 /*
     {
         lyric: '',

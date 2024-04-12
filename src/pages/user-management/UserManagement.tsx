@@ -10,13 +10,13 @@ import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalDa
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import './UserManagement.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, message } from 'antd'
+import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, message, notification } from 'antd'
 import { PermissionEntity, UserEntity } from '../../api/Entities'
 import { IResponse, request } from '../../utils/request'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import DateTimeUtils from '../../utils/DateTimeUtils'
 import { Permission } from '../../api/Permissions'
-import { CrownOutlined, CrownTwoTone, EyeOutlined, InboxOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from '@ant-design/icons'
+import { CrownOutlined, CrownTwoTone, DeleteOutlined, EyeOutlined, InboxOutlined, MinusOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined, UsergroupDeleteOutlined } from '@ant-design/icons'
 import XlsxUtils from '../../utils/XlsxUtils'
 import * as XLSX from 'xlsx'
 import Dragger from 'antd/es/upload/Dragger'
@@ -87,6 +87,9 @@ export default function UserManagementPage() {
     const [addUsersDialogOpen, setAddUsersDialogOpen] = useState(false)
 
     const [viewDetailUserId, setViewDetailUserId] = useState<number | null>(null)
+    const [deleteUserUserEntity, setDeleteUserUserEntity] = useState<UserEntity | null>(null)
+
+    const [deleteUsersDialogOpen, setDeleteUsersDialogOpen] = useState(false)
 
     /* constructor */
 
@@ -138,11 +141,17 @@ export default function UserManagementPage() {
             return globalData.userPermissions.contains(permission)
         }
 
+        const buttonStyle = {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: 2
+        } as React.CSSProperties
+
         
         buttons.push(
             <Tooltip title='详细'>
-                <Button
-                    type='primary'
+                <Button style={buttonStyle} type='primary'
                     shape='circle'
                     icon={ <EyeOutlined /> }
                     onClick={() => {
@@ -151,6 +160,28 @@ export default function UserManagementPage() {
                 />
             </Tooltip>
         )
+
+
+        if (
+            hasPermission(Permission.DELETE_ANY_USER) 
+            || 
+            (
+                hasPermission(Permission.CREATE_AND_DELETE_USER) 
+                && 
+                user.creator === globalData.userEntity?.id
+            )
+        ) {
+            buttons.push(
+                <Tooltip title='删除用户'>
+                    <Button danger type='primary' shape='circle' style={buttonStyle}
+                        icon={ <DeleteOutlined /> }
+                        onClick={() => {
+                            setDeleteUserUserEntity(user)
+                        }}
+                    />
+                </Tooltip>
+            )
+        }
     
 
         return <div
@@ -205,9 +236,24 @@ export default function UserManagementPage() {
             &&
 
             <FloatButton.Group shape='circle' trigger='hover' type='primary' icon={<PlusOutlined />}>
-                <FloatButton icon={<UserAddOutlined />} type='default' onClick={ () => { setAddUserDialogOpen(true) } } />
+                <Tooltip title='创建1个用户' placement='left'>
+                    <FloatButton icon={<UserAddOutlined />} type='default' 
+                        onClick={ () => { setAddUserDialogOpen(true) } } 
+                    />
+                </Tooltip>
 
-                <FloatButton icon={<UsergroupAddOutlined />} type='default' onClick={ () => { setAddUsersDialogOpen(true) } } />
+                <Tooltip title='批量创建用户' placement='left'>
+                    <FloatButton icon={<UsergroupAddOutlined />} type='default' 
+                        onClick={ () => { setAddUsersDialogOpen(true) } } 
+                    />
+                </Tooltip>
+
+
+                <Tooltip title='批量删除用户' placement='left'>
+                    <FloatButton icon={<UsergroupDeleteOutlined />} type='default' 
+                        onClick={ () => { setDeleteUsersDialogOpen(true) } } 
+                    />
+                </Tooltip>
             </FloatButton.Group>
         }
 
@@ -236,9 +282,302 @@ export default function UserManagementPage() {
             open={addUsersDialogOpen}
         />
 
+        <DeleteUserDialog
+            user={deleteUserUserEntity}
+            onClose={() => {
+                setDeleteUserUserEntity(null)
+                loadTablePage()
+            }}
+        />
+
+        <DeleteUsersDialog
+            open={deleteUsersDialogOpen}
+            onClose={() => {
+                setDeleteUsersDialogOpen(false)
+                loadTablePage()
+            }}
+        />
+
     </Spin></div>
+
+    /* end of render */
+
+} // export default function UserManagementPage() 
+
+
+
+/* ------------ Delete User Dialog ------------ */
+
+interface DeleteUserDialogProps {
+    onClose: () => void
+    user: UserEntity | null
 }
 
+
+type DeleteUsersResultDtoEntry = {
+    userId: number | null
+    username: string | null
+    success: boolean
+    msg: string
+}
+
+function DeleteUserDialog(props: DeleteUserDialogProps) {
+
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    return <Drawer
+        open={props.user !== null}
+        onClose={props.onClose}
+        size='large'
+        title={`删除用户`}
+    >
+        <h2 style={{ color: '#ee3f4d' }}><b>
+            准备删除用户：{props.user?.username} ({props.user?.id})    
+        </b></h2>
+        
+        <Divider />
+        
+        <p>这将同步删除该用户名下的所有主机环境。</p>
+        <p>如果该用户是某群管理员，删除用户可能导致该群组无人管理。</p>
+
+
+        <Divider />
+        
+        { /* 确认按钮 */ }
+
+        <Spin spinning={confirmLoading || loading}><Button
+            style={{
+                width: '100%'
+            }}
+            danger type='primary' shape='round'
+            onClick={() => {
+                setConfirmLoading(true)
+                request({
+                    url: 'user/deleteUsers',
+                    method: 'post',
+                    data: {
+                        userIds: [props.user?.id]
+                    },
+                    vfOpts: {
+                        rejectNonOKResults: true,
+                        autoHandleNonOKResults: true,
+                        giveResDataToCaller: true
+                    }
+                }).then(untypedRes => {
+                    const res = untypedRes[0] as DeleteUsersResultDtoEntry
+                    if (res.success) {
+                        message.success(res.msg)
+                        props.onClose()
+                    } else {
+                        message.error(`删除失败：${res.msg}`)
+                    }
+                }).catch(err => {}).finally(() => {
+                    setConfirmLoading(false)
+                })
+            }}
+        >
+            删除
+        </Button></Spin>
+
+    </Drawer>
+}
+
+
+
+/* ------------ Delete Multiple Users Dialog ------------ */
+
+interface DeleteUsersDialogProps {
+    onClose: () => void
+    open: boolean
+}
+
+interface DeleteUsersUserEntity {
+    id: number | null
+    username: string
+    result: 'pending' | 'deleted' | 'failed'
+    resultMsg: string
+}
+
+function DeleteUsersDialog(props: DeleteUsersDialogProps) {
+
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [tableDataSource, setTableDataSource] = useState<DeleteUsersUserEntity[]>([])
+
+
+    return <Drawer
+        title='批量删除用户'
+        size='large'
+        onClose={props.onClose}
+        open={props.open}
+        destroyOnClose={true}
+        closable={!confirmLoading}
+        maskClosable={false}
+    >
+        <Image
+            width='100%'
+            src='https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/add-users-csv-example.webp'
+            style={{
+                borderRadius: 8,
+                boxShadow: '0 0 8px 4px #6664'
+            }}
+            preview={false}
+        />
+        
+        <p>将待删除用户信息整理到表格，导出为 CSV 格式。</p>
+        <p>首行为表头；待删除用户的用户名在 <b>vesper-username</b> 列，如上图所示。其他列默认忽略。</p>
+
+        <Spin spinning={confirmLoading}><Dragger
+            name='file'
+            multiple={false}
+            accept='.csv'
+            maxCount={1}
+            height={144}
+            beforeUpload={(file, fileList) => {
+                file.text().then(res => {
+                    let csv = new CSVSheet(res)
+                    let users = csv.getCol('vesper-username')
+                    let dataSource = [] as DeleteUsersUserEntity[]
+                    if (users !== null) {
+                        for (let it of users) {
+                            dataSource.push({
+                                id: null,
+                                username: it,
+                                result: 'pending',
+                                resultMsg: '未上传',
+                            })
+                        }
+                    } // if (users !== null)
+                    setTableDataSource(dataSource)
+                }) // file.text().then(res =>
+                return false
+            }} // beforeUpload={(file, fileList) => {
+        >
+            <p className='ant-upload-drag-icon'>
+                <UploadOutlined />
+            </p>
+            <p className='ant-upload-text'>点击我 或 拖拽 CSV 文件到这里</p>
+        </Dragger></Spin>
+
+        <Divider />
+
+        <p>待删除用户预览</p>
+
+        <Spin spinning={confirmLoading}><Table 
+            dataSource={tableDataSource}
+            columns={[
+                {
+                    title: '用户id',
+                    dataIndex: 'id',
+                    key: 'id',
+                    render: (id: number | null) => {
+                        return id === null ? '' : id
+                    }
+                },
+                {
+                    title: '用户名',
+                    dataIndex: 'username',
+                    key: 'username',
+                },
+                {
+                    title: '状态',
+                    dataIndex: 'result',
+                    key: 'result',
+                    render: (_: any, record: DeleteUsersUserEntity) => {
+                        const style = {} as React.CSSProperties
+
+                        if (record.result === 'failed') {
+                            style.color = '#ee3f4d'
+                        } else if (record.result === 'deleted') {
+                            style.color = '#41b349'
+                        }
+
+                        return <div style={style}>{record.resultMsg}</div>
+                    }
+                },
+                {
+                    title: '操作',
+                    key: 'op',
+                    render: (_: any, record: DeleteUsersUserEntity) => {
+                        return <Tooltip title='移除'>
+                            <Button danger type='primary' ghost shape='circle'
+                                icon={ <MinusOutlined /> }
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                onClick={() => {
+                                    tableDataSource.splice(
+                                        tableDataSource.indexOf(record), 1
+                                    )
+                                    setTableDataSource([...tableDataSource])
+                                }}
+                            />
+                        </Tooltip>
+                    }
+                }
+            ]}
+        /></Spin>
+
+        <Divider />
+
+        <Spin spinning={confirmLoading}><Button 
+            style={{ width: '100%' }}
+            type='primary' danger shape='round'
+            onClick={() => {
+                setConfirmLoading(true)
+
+                request({
+                    url: 'user/deleteUsers',
+                    method: 'post',
+                    data: {
+                        usernames: tableDataSource.map((it) => it.username)
+                    },
+                    vfOpts: {
+                        rejectNonOKResults: true,
+                        autoHandleNonOKResults: true,
+                        giveResDataToCaller: true
+                    }
+                }).then(untypedRes => {
+                    const res = untypedRes as DeleteUsersResultDtoEntry[]
+                    
+                    // username -> res obj
+                    const resMap = new Map<string, DeleteUsersResultDtoEntry>()
+                    for (const it of res) {
+                        if (it.username === null) {
+                            console.error("null while processing the result of 'user/deleteUsers'")
+                            console.error(it)
+                            message.error('系统异常。建议刷新页面。如果持续出问题，请联系开发者。')
+                            continue
+                        }
+
+                        resMap.set(it.username, it)
+                    }
+
+                    for (const tableEntry of tableDataSource) {
+                        const resEntry = resMap.get(tableEntry.username)
+                        if (resEntry === undefined || resEntry === null) {
+                            tableEntry.resultMsg = '上传失败'
+                            continue
+                        }
+
+                        tableEntry.result = resEntry.success ? 'deleted' : 'failed'
+                        tableEntry.resultMsg = resEntry.msg
+                        tableEntry.id = resEntry.userId
+                    }
+
+                    setTableDataSource([...tableDataSource])
+
+                }).catch(err => {}).finally(() => {
+                    setConfirmLoading(false)
+                })
+            }}
+        >
+            确认删除
+        </Button></Spin>
+    </Drawer>
+}
 
 
 /* ------------ User Detail Dialog ------------ */

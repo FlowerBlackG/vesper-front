@@ -11,6 +11,7 @@ import { NavigateFunction, NavigateOptions, To } from "react-router-dom"
 import { GroupPermissionStore, PermissionStore } from "./PermissionStore"
 import { later } from "../utils/later"
 import { PageRouteData } from "./PageRoutes/TypeDef"
+import { MessageInstance } from "antd/es/message/interface"
 
 /**
  * 全局变量。
@@ -27,7 +28,8 @@ export const globalData = {
 
 export const globalHooksRegistry = {
     app: {
-        navigate: null as NavigateFunction | null
+        navigate: null as NavigateFunction | null,
+        message: null as MessageInstance | null
     },
 
     layoutFrame: {
@@ -42,7 +44,8 @@ export const globalHooksRegistry = {
 export const globalHooks = {
     app: {
         // buggy, but fixed in components/GlobalNavigate.tsx
-        navigate: globalHooksRegistry.app.navigate as NavigateFunction
+        navigate: globalHooksRegistry.app.navigate as NavigateFunction,
+        message: globalHooksRegistry.app.message as MessageInstance
     },
 
     layoutFrame: {

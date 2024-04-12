@@ -28,14 +28,11 @@ export class CookieBasedDataStore {
         this.cookies.set(this.makeKey(key), value)
     }
 
-    static get(key: string): any | undefined {
+    static set = CookieBasedDataStore.put
+
+    static get<T=any>(key: string, defaultValue: T | undefined = undefined): T | undefined {
         let raw = this.cookies.get(this.makeKey(key))
-
-        if (raw === undefined) {
-            return undefined
-        }
-
-        return raw
+        return raw !== undefined ? raw : defaultValue
     }
 
     static remove(key: string) {

@@ -13,6 +13,8 @@ import PageRouteManager from './common/PageRoutes/PageRouteManager'
 import { globalData } from './common/GlobalData'
 import { useConstructor } from './utils/react-functional-helpers'
 import { GlobalNavigate } from './components/GlobalNavigate'
+import AntdMessageHost from './components/AntdMessageHost'
+import { request } from './utils/request'
 
 export default function AppMain() {
 
@@ -27,6 +29,8 @@ export default function AppMain() {
         MacroDefines.WEB_ROOT_PATH
     }>
         <GlobalNavigate />
+        <AntdMessageHost />
+
         <Routes>
             <Route path="/" key={ "appmain-route-root" }>{
 

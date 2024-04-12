@@ -194,6 +194,7 @@ export default function LoginPage() {
 
                 transitionDuration: '1s',
                 transitionProperty: 'opacity',
+                userSelect: 'none'
             }}
             onLoad={() => {
                 setBackgroundOpacity(1)
@@ -339,7 +340,7 @@ export default function LoginPage() {
             borderRadius: 12,
             padding: 4,
         }}>
-            { Version.tag } ({Version.code})-{Version.branch} {Version.buildTime}
+            { Version.tag } ({Version.code}) {Version.buildTime}
             
         </div>
 

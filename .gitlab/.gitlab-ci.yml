@@ -1,0 +1,23 @@
+image: node:20.11.0
+
+cache:
+  paths:
+    - node_modules/
+
+before_script:
+  - rm -rf build
+
+pages:
+  stage: deploy
+  script:
+    - CI=false yarn
+    - CI=false yarn build
+    - cp build/index.html build/404.html
+    - rm -rf public
+    - mv build public
+  artifacts:
+    paths:
+      - public
+  only:
+    - master
+

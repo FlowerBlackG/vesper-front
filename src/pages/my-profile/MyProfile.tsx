@@ -103,7 +103,11 @@ export default function MyProfilePage() {
         <div style={{height: 64}} />
 
         <Avatar 
-            src={ 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp' } 
+            shape='square'
+            src={ 
+                'https://i0.wp.com/chiikawahk.com/wp-content/uploads/2023/12/image-3.png' // todo: copyright
+                //'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp' 
+            } 
             style={{
                 height: avatarWidth,
                 width: avatarWidth,
