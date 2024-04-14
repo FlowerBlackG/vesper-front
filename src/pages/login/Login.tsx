@@ -21,6 +21,7 @@ import Random from "../../utils/Random"
 import { CloudServerOutlined, LinkOutlined } from "@ant-design/icons"
 import Config from "../../common/Config"
 import { LoginPageBackgroundManager } from "./LoginPageBackgrounds"
+import { useSearchParams } from "react-router-dom"
 
 type LoginPageState = {
     loginOnProgress: boolean
@@ -45,6 +46,18 @@ export default function LoginPage() {
 
     const [loginButtonHover, setLoginButtonHover] = useState(false)
     const [loginButtonActive, setLoginButtonActive] = useState(false)
+    const [backendUrl, setBackendUrl] = useState(Config.backendRoot)
+
+
+    const [searchParams, setSearchParams] = useSearchParams()
+    if (searchParams.has('backendRoot')) {
+        const backendRoot = searchParams.get('backendRoot')!
+        Config.backendRoot = backendRoot
+        globalHooks.app.message.success(`后端地址设置为 ${backendRoot}`)
+        searchParams.delete('backendRoot')
+        setSearchParams(searchParams)
+        setBackendUrl(backendRoot)
+    }
 
     useConstructor(constructor)
     function constructor() {
@@ -74,7 +87,7 @@ export default function LoginPage() {
             res = res as IResponse
             if (res.code === HttpStatusCode.OK) {
                 // 登录成功。
-                message.success('欢迎登录落霞前厅')
+                globalHooks.app.message.success('欢迎登录落霞前厅')
                 globalHooks.app.navigate!({ pathname: '/' })
             } else {
                 // 登录失败。
@@ -112,7 +125,6 @@ export default function LoginPage() {
 
 
     let editBackendModalBackendUrl = ''
-    const [backendUrl, setBackendUrl] = useState(Config.backendRoot)
 
     function showEditBackendModal() {
         Modal.info({

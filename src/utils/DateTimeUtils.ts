@@ -20,9 +20,15 @@ export default class DateTimeUtils {
      * @returns 对人类更友好的时间串。
      */
     static iso8601toHumanFriendly(
-        original: string, withSeconds: boolean = false
+        original: string | undefined, 
+        withSeconds: boolean = false, 
+        defaultValue: string = '无'
     ): string {
-        let datetimeMoment = moment.utc(original).local()
+        if (original === undefined || original === null) {
+            return defaultValue
+        }
+
+        const datetimeMoment = moment.utc(original).local()
         let fmt = 'yyyy年MM月DD日 HH:mm'
         if (withSeconds) {
             fmt += ':ss'

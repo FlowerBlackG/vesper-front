@@ -21,6 +21,13 @@ export interface UserEntity {
 }
 
 
+export interface UserGroupEntity {
+    id: number
+    groupName: string
+    note: string
+    createTime: string
+}
+
 export interface SeatEntity {
     id: number
     userId: number

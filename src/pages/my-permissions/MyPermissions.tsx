@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import styles from './MyPermissions.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { ensureGlobalData, globalData } from '../../common/GlobalData'
+import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import { Permission } from '../../api/Permissions'
@@ -58,8 +58,10 @@ export default function MyPermissionsPage() {
 
 
     const constructor = () => {
-        loadPageToLayoutFrame(pageEntity)
-        ensureGlobalData().then(() => {
+        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
+        ensureGlobalData({
+            forceReloadPermissions: true, forceReloadGroupPermissions: true
+        }).then(() => {
             loadData()
         }).catch(() => {})
     }

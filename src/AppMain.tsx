@@ -10,11 +10,12 @@ import React, { useRef } from 'react'
 import { BrowserRouter, HashRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import MacroDefines from './common/MacroDefines' 
 import PageRouteManager from './common/PageRoutes/PageRouteManager' 
-import { globalData } from './common/GlobalData'
+import { globalData, globalHooks } from './common/GlobalData'
 import { useConstructor } from './utils/react-functional-helpers'
 import { GlobalNavigate } from './components/GlobalNavigate'
 import AntdMessageHost from './components/AntdMessageHost'
 import { request } from './utils/request'
+import { Button } from 'antd'
 
 export default function AppMain() {
 
@@ -75,31 +76,48 @@ export default function AppMain() {
                     <div
                         style={{
                             position: 'absolute',
-                            left: '50%',
-                            top: '50%',
-                            transform: 'translate(-50%, -50%)',
-                
+
                             display: 'flex',
                             flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                 
-                            paddingTop: '4rem',
-                            paddingBottom: '4rem',
-                            paddingLeft: '2rem',
-                            paddingRight: '2rem',
-                
-                            width: '16rem',
-                
-                            background: '#8884',
-                            borderRadius: 24,
+                            width: '100%',
+                            height: '100%',
+
+                            margin: 16,
+
+                            background: '#4444',
+                            borderRadius: 6,
                             boxShadow: '0px 6px 24px #0008',
                 
-                            backdropFilter: 'blur(8px)',
-                            textAlign: 'center',
-                            fontSize: 28,
+                            backdropFilter: 'blur(4px)',
                             color: '#ffff'
                         }}
                     >
-                        404 not found.
+                        <div style={{ 
+                            fontFamily: 'JetBrains Mono, Consola, Mono',
+                            fontSize: 56,
+                            textAlign: 'center',
+                         }}>
+                            <p>
+                                404 not found.
+                            </p>    
+
+                            <Button size='large' ghost style={{width: '100%'}}
+                                onClick={() => globalHooks.app.navigate(-1)}
+                            >
+                                回到上一页
+                            </Button>                    
+                            
+                            <Button size='large' ghost style={{width: '100%'}}
+                                onClick={() => globalHooks.app.navigate({pathname: '/'})}
+                            >
+                                回到主页
+                            </Button>
+
+                        </div>
+                        
                     </div>
                     
                 </div>

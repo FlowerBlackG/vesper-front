@@ -4,10 +4,9 @@
  * 创建于 2024年4月1日 上海市嘉定区
  */
 
-import { UserManagementPage } from "./user-management/UserManagement";
-
+import DetailPage from "./detail/Detail";
 
 export default abstract class GroupsSubPages {
-    static UserManagementPage = UserManagementPage
+    static DetailPage = DetailPage
 }
 

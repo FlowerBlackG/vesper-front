@@ -63,6 +63,10 @@ export const globalHooks = {
             }
         },
 
+        loadPageEntity: (entity: PageRouteData) => {
+            globalHooks.layoutFrame.setCurrentPageEntity(entity)
+        },
+
         setTitle: (title: string) => {
             const f = globalHooksRegistry.layoutFrame.setTitle
             if (f) {

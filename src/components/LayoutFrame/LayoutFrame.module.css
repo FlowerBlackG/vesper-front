@@ -25,3 +25,13 @@
 .navItemCurrent {
     border-left: 8px solid #0004;
 }
+
+
+.MainElementShadow {
+    box-shadow: 0px 0px 2px 1px #aaa2;
+    transition: 0.4s;
+}
+
+.MainElementShadow:hover {
+    box-shadow: 0px 0px 6px 2px #aaa2;
+}

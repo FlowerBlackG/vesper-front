@@ -71,7 +71,8 @@ export function AboutPage() {
             className={ styles.logo }
         />
 
-        <div className={styles.title}>落霞前厅</div>
+        <div className={styles.title}>Vesper Front 落霞前厅</div>
+        <div style={{ marginTop: 8 }}>by 罐头鱼</div>
 
         <div
             style={{
@@ -79,12 +80,12 @@ export function AboutPage() {
             }}
         >
             <div>
-                程序版本：    
+                程序版本：
                 { state.appVersionName } ({state.appVersionCode})
             </div>
 
             <div>
-                后台版本：    
+                后台版本：
                 { state.backendVersionName } ({state.backendVersionCode})
             </div>
 

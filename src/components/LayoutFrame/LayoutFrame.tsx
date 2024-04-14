@@ -12,7 +12,7 @@ import { request } from '../../utils/request';
 import MacroDefines from '../../common/MacroDefines';
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
-import { Button, Flex, Menu, Spin, Typography, message } from 'antd';
+import { Button, Flex, Menu, Spin, Tooltip, Typography, message } from 'antd';
 import { ArrowLeftOutlined, LogoutOutlined } from '@ant-design/icons';
 import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
 import { later } from '../../utils/later';
@@ -161,10 +161,10 @@ export default function LayoutFrame(
 
         return <div style={{
             width: 120,
-            borderRight: '1px solid #0004',
             display: 'flex',
             flexDirection: 'column',
-            position: 'relative'
+            position: 'relative',
+            flexShrink: 0,
         }}>
             
             { /* 个人信息。 */ }
@@ -192,17 +192,21 @@ export default function LayoutFrame(
                     flexShrink: '0'
                 }} />
 
-                <div style={{ 
-                    flexShrink: '0',
-                    flexGrow: 1,
-                    width: 0,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    marginRight: '0.4em'
-                }}>
-                    { globalData.userEntity?.username }
-                </div>
+                <Tooltip title={globalData.userEntity?.username}>
+                    <div 
+                        style={{ 
+                            flexShrink: '0',
+                            flexGrow: 1,
+                            width: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            marginRight: '0.4em'
+                        }}
+                    >
+                        { globalData.userEntity?.username }
+                    </div>
+                </Tooltip>
             </div>
         
             { /* 导航项。 */ }
@@ -221,7 +225,9 @@ export default function LayoutFrame(
 
                 <Menu 
                     items={ menuItems }
-                    
+                    style={{
+                        borderRight: 'solid 0px #0000'
+                    }}
                     onSelect={(event) => {
 
                         let entity = PageRouteManager.getRouteEntity(event.key)
@@ -240,14 +246,13 @@ export default function LayoutFrame(
     }
 
     function toolbar(): React.ReactNode {
-        return <div style={{
+        return <Flex style={{
             height: 42,
-            display: 'flex',
             alignItems: 'center',
             color: '#000b',
             fontSize: 20,
             paddingLeft: 18,
-            borderBottom: '1px solid #0004'
+            flexShrink: 0,
         }}>
 
             { /* 返回按钮 */ }
@@ -257,15 +262,16 @@ export default function LayoutFrame(
                     style={{
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        position: 'absolute',
                     }}
-                    shape='circle'
+                    shape='round'
                     icon={<ArrowLeftOutlined />}
                     onClick={ () => { navigate( -1 ) } }
                 />
             }
 
-            <div style={{ marginLeft: showBackBtn ? 18 : 0 }}>
+            <div style={{ width: '100%', textAlign: 'center' }}>
                 { pageTitle }
             </div>
 
@@ -278,10 +284,12 @@ export default function LayoutFrame(
             />
 
             { /* 退出登录。 */ } 
-            <Button 
+            <Tooltip title='退出登录'><Button 
                 style={{
-                    right: 8,
-                    position: 'absolute'
+                    marginRight: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                 }}
                 shape='round'
                 icon={<LogoutOutlined />}
@@ -295,9 +303,9 @@ export default function LayoutFrame(
                         navigate({ pathname: '/login' })
                     })
                 }}
-            > 退出登录 </Button>
+            /></Tooltip>
              
-        </div>
+        </Flex>
     }
 
 
@@ -331,7 +339,11 @@ export default function LayoutFrame(
             <div style={{
                 flex: 1,
                 position: 'relative',
-            }}>
+                marginTop: 2,
+                marginLeft: 2,
+                borderTopLeftRadius: 4,
+                border: 'solid 1px #aaa2',
+            }} className={styles.MainElementShadow}>
                 { props.children }
             </div>
             

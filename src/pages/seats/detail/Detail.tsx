@@ -462,7 +462,7 @@ export default function DetailPage() {
         )
 
         buttons.push(
-            <Button
+            <Button danger
                 type="primary"
                 shape="round"
                 disabled={!opBtnReady}

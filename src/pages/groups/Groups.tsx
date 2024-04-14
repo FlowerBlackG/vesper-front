@@ -9,7 +9,7 @@ import { ensureGlobalData, globalData, globalHooks } from "../../common/GlobalDa
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager";
 import { useConstructor } from "../../utils/react-functional-helpers";
 import { GroupPermission, Permission } from "../../api/Permissions";
-import { DeleteOutlined, GroupOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
+import { DeleteOutlined, GroupOutlined, MoreOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
 import React, { useState } from "react";
 
 import { Typography } from "antd"
@@ -123,28 +123,6 @@ export default function GroupsPage() {
                     justifyContent: 'center',
                 } as React.CSSProperties
 
-                if (hasPermission(record.id, GroupPermission.ADD_OR_REMOVE_USER)) {
-                    buttons.push(
-                        <Tooltip title='用户管理'>
-                            <Button
-                                style={ btnStyle }
-                                type="primary"
-                                shape="circle"
-
-                                icon={ <UserOutlined /> }
-                                onClick={() => {
-                                    globalHooks.app.navigate!({ 
-                                        pathname: '/groups/user-management',
-                                        search: `groupId=${record.id}`
-                                        
-                                    })
-                                }}
-                            />
-                        </Tooltip>
-                        
-                    )
-                }
-
                 if (hasPermission(record.id, GroupPermission.DROP_GROUP)) {
                     buttons.push(
                         <Tooltip title='删除群组'>
@@ -161,6 +139,22 @@ export default function GroupsPage() {
                         </Tooltip>
                     )
                 }
+
+                buttons.push(
+                    <Tooltip title='详细'>
+                        <Button style={btnStyle} type="primary"
+                            shape="circle"
+                            icon={ <MoreOutlined /> }
+                            onClick={() => {
+                                globalHooks.app.navigate!({ 
+                                    pathname: '/groups/detail',
+                                    search: `groupId=${record.id}`
+                                    
+                                })
+                            }}
+                        />
+                    </Tooltip>
+                )
 
                 return <div
                     style={{

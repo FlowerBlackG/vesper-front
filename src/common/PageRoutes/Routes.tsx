@@ -147,9 +147,9 @@ export default class PageRoutes {
         },
 
         {
-            path: '/groups/user-management',
-            name: '群组用户管理',
-            element: <GroupsSubPages.UserManagementPage />,
+            path: '/groups/detail',
+            name: '详情',
+            element: <GroupsSubPages.DetailPage />,
             icon: FluentUIEmojiProxy.colorSvg('bagel_color'),
             inFrame: true,
             showInSidebar: false,

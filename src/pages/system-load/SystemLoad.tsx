@@ -38,6 +38,8 @@ export default function SystemLoadPage() {
     const [swapTotal, setSwapTotal] = useState(0)
     const [swapFree, setSwapFree] = useState(0)
 
+    const [cpuUsage, setCpuUsage] = useState(0.0)  // Double: 0 .. 100
+
     
     /* ctor */
 
@@ -70,6 +72,7 @@ export default function SystemLoadPage() {
 
     function fetchData(autoRefresh: boolean = true) {
         loadMemoryUsage()
+        loadCpuUsage()
         
         if (autoRefresh) {
             setTimeout(() => {
@@ -95,6 +98,20 @@ export default function SystemLoadPage() {
     }
 
 
+    function loadCpuUsage() {
+        request({
+            url: 'vesperCenter/cpuUsage',
+            vfOpts: {
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true,
+                giveResDataToCaller: true
+            }
+        }).then(res => {
+            setCpuUsage(res)
+        }).catch(() => {})
+    }
+
+
     /* render */
 
     const cardMargin = 4
@@ -112,12 +129,13 @@ export default function SystemLoadPage() {
                 width: 200,
                 margin: cardMargin
             }}
-            hoverable={true}
+            hoverable
         >
             <p>总量：{ (memoryTotal / 1024 / 1024 / 1024).toFixed(2) } GB</p>
+            <p>已用：{ ((memoryTotal - memoryAvailable) / 1024 / 1024 / 1024).toFixed(2) } GB</p>
             <p>可用：{ (memoryAvailable / 1024 / 1024 / 1024).toFixed(2) } GB</p>
             <Progress 
-                percent={ 100 - memoryAvailable / memoryTotal * 100 }
+                percent={ Math.min(99, 100 - memoryAvailable / memoryTotal * 100) }
                 showInfo={ false }
                 strokeColor={ progressColor } 
             />
@@ -132,16 +150,34 @@ export default function SystemLoadPage() {
                 width: 200,
                 margin: cardMargin
             }}
-            hoverable={true}
+            hoverable
         >
             <p>总量：{ (swapTotal / 1024 / 1024 / 1024).toFixed(2) } GB</p>
+            <p>已用：{ ((swapTotal - swapFree) / 1024 / 1024 / 1024).toFixed(2) } GB</p>
             <p>可用：{ (swapFree / 1024 / 1024 / 1024).toFixed(2) } GB</p>
             <Progress 
-                percent={ 100 - swapFree / swapTotal * 100 }
+                percent={ Math.min(99, 100 - swapFree / swapTotal * 100) }
                 showInfo={ false }
                 strokeColor={ progressColor } 
             />
 
+        </Card>
+    }
+
+    function cpuUsageCard() {
+        return <Card
+            title='CPU负载'
+            style={{
+                width: 200,
+                margin: cardMargin
+            }}
+            hoverable
+        >
+            <Progress
+                type='dashboard'
+                percent={ Math.min(99, Number(cpuUsage.toFixed(1))) }
+                strokeColor={ progressColor } 
+            />
         </Card>
     }
 
@@ -157,6 +193,7 @@ export default function SystemLoadPage() {
 
         { memoryUsageCard() }
         { swapUsageCard() }
+        { cpuUsageCard() }
 
     </div>
 }

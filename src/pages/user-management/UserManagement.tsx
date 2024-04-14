@@ -10,7 +10,7 @@ import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalDa
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import './UserManagement.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, message, notification } from 'antd'
+import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, notification } from 'antd'
 import { PermissionEntity, UserEntity } from '../../api/Entities'
 import { IResponse, request } from '../../utils/request'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
@@ -28,6 +28,8 @@ import styles from './UserManagement.module.css'
 
 export default function UserManagementPage() {
     const pageEntity = PageRouteManager.getRouteEntity('/user-management')
+
+    const message = globalHooks.app.message
 
     /* table columns */
 
@@ -323,6 +325,8 @@ type DeleteUsersResultDtoEntry = {
 
 function DeleteUserDialog(props: DeleteUserDialogProps) {
 
+    const message = globalHooks.app.message
+
     const [confirmLoading, setConfirmLoading] = useState(false)
     const [loading, setLoading] = useState(false)
 
@@ -400,6 +404,8 @@ interface DeleteUsersUserEntity {
 }
 
 function DeleteUsersDialog(props: DeleteUsersDialogProps) {
+
+    const message = globalHooks.app.message
 
     const [confirmLoading, setConfirmLoading] = useState(false)
     const [tableDataSource, setTableDataSource] = useState<DeleteUsersUserEntity[]>([])
@@ -589,6 +595,8 @@ interface UserDetailDialogProps {
 
 function UserDetailDialog(props: UserDetailDialogProps) {
 
+    const message = globalHooks.app.message
+
     const [userEntity, setUserEntity] = useState<
         (UserEntity 
             & 
@@ -738,6 +746,7 @@ function UserDetailDialog(props: UserDetailDialogProps) {
                                         }
 
                                         message.success('赋权编辑成功')
+
                                         if (checked) {
                                             userPermissions.push(it.id)
                                         } else {
@@ -775,6 +784,8 @@ interface AddSingleUserDialogProps {
 }
 
 function AddSingleUserDialog(props: AddSingleUserDialogProps) {
+
+    const message = globalHooks.app.message
 
     const [confirmLoading, setConfirmLoading] = useState(false)
 
