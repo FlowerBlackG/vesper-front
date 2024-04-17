@@ -18,6 +18,7 @@ import SeatsPage from "../../pages/seats/Seats"
 import SeatsSubPages from "../../pages/seats/SeatsSubPages"
 import SystemLoadPage from "../../pages/system-load/SystemLoad"
 import UserManagementPage from "../../pages/user-management/UserManagement"
+import VNCViewerPage from "../../pages/vnc-viewer/VNCViewer"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
 import { globalData } from "../GlobalData"
 import { PageRouteCategory, PageRouteData } from "./TypeDef"
@@ -195,6 +196,16 @@ export default class PageRoutes {
             category: categoryKeys.vesperCenterControlPanel,
         },
         
+
+        {
+            path: '/vnc-viewer',
+            name: 'VNC Viewer',
+            icon: FluentUIEmojiProxy.colorSvg('desktop_computer_color'),
+            element: <VNCViewerPage />,
+            showInSidebar: false,
+            showInHomePage: false,
+            showBackButton: true,
+        },
     ]
     
     

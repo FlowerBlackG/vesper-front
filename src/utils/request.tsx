@@ -10,7 +10,6 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
 import { globalHooks, resetGlobalData } from "../common/GlobalData"
 import { HttpStatusCode } from "./HttpStatusCode"
 import URLNavigate from "./URLNavigate"
-import { message } from "antd"
 import { Navigate, useNavigate } from "react-router-dom"
 import { CookieBasedDataStore as DataStore } from "./CookieBasedDataStore"
 
@@ -41,7 +40,7 @@ export interface IResponse {
  * @param isReallyNetworkError 是不是真的是网络错误。当服务器后端出现错误，也会调用此函数。
  */
 function defaultNetworkExceptionHandler(isReallyNetworkError: boolean) {
-    message.error({
+    globalHooks.app.message.error({
         content: isReallyNetworkError ? '网络异常' : '服务器异常'
     })
 }
@@ -56,7 +55,7 @@ function defaultUnauthorizedExceptionHandler() {
 
 
 function vesperCenterNonOkResultDefaultHandler(res: IResponse) {
-    message.error(`${res.msg} (${res.code})`)
+    globalHooks.app.message.error(`${res.msg} (${res.code})`)
 }
 
 

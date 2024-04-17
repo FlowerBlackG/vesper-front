@@ -12,10 +12,12 @@ import { useConstructor } from "../../../utils/react-functional-helpers"
 import { SeatEntity } from "../../../api/Entities"
 import { request } from "../../../utils/request"
 import { useSearchParams } from "react-router-dom"
-import { Button, Card, Descriptions, Flex, Space, Spin, message } from "antd"
+import { Button, Card, Descriptions, Flex, Space, Spin, Tooltip, message } from "antd"
 import styles from './Detail.module.css'
 import DateTimeUtils from "../../../utils/DateTimeUtils"
-import { DesktopOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
+import { DesktopOutlined, LinkOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
+import axios, { Axios } from "axios"
+import Config from "../../../common/Config"
 
 
 
@@ -51,6 +53,7 @@ export default function DetailPage() {
     const [vncPort, setVncPort] = useState(0)
     const [vncIPAddr, setVncIPAddr] = useState('0.0.0.0')
     const [vncPasswd, setVncPasswd] = useState('******')
+    const [vncInfoLoaded, setVncInfoLoaded] = useState(false)
     
     const [vncConnInfoRefreshing, setVncConnInfoRefreshing] = useState(false)
 
@@ -68,12 +71,28 @@ export default function DetailPage() {
                 return
             }
 
+            loadDefaultVNCIPAddress()
             loadData()
         })
     }
     useConstructor(constructor)
 
     /* methods */
+
+    function loadDefaultVNCIPAddress() {
+        let host = Config.backendRoot
+        let pos = host.indexOf('//')
+        if (pos !== -1) {
+            host = host.substring(pos + 2)
+        }
+
+        pos = host.lastIndexOf(':')
+        if (pos !== -1) {
+            host = host.substring(0, pos)
+        }
+
+        setVncIPAddr(host)
+    }
 
     function loadData() {
         loadSeatEntity()
@@ -378,9 +397,12 @@ export default function DetailPage() {
                                     autoHandleNonOKResults: true
                                 }
                             }).then(res => {
-                                setVncIPAddr(res.vesperIP)
+                                if (res.vesperIP !== '0.0.0.0') {
+                                    setVncIPAddr(res.vesperIP)
+                                }
                                 setVncPort(res.vesperPort)
                                 setVncPasswd(res.vncPassword)
+                                setVncInfoLoaded(true)
                             }).catch(err => {}).finally(() => {
                                 setVncConnInfoRefreshing(false)
                             })
@@ -449,9 +471,12 @@ export default function DetailPage() {
                             autoHandleNonOKResults: true
                         }
                     }).then(res => {
-                        setVncIPAddr(res.vesperIP)
+                        if (res.vesperIP !== '0.0.0.0') {
+                            setVncIPAddr(res.vesperIP)
+                        }
                         setVncPort(res.vesperPort)
                         setVncPasswd(res.vncPassword)
+                        setVncInfoLoaded(true)
                     }).catch(err => {}).finally(() => {
                         setOpBtnReady(true)
                     })
@@ -491,6 +516,26 @@ export default function DetailPage() {
             >
                 关机
             </Button>
+        )
+
+
+        buttons.push(
+            <Tooltip title={
+                vncInfoLoaded ? '内置 VNC Viewer 性能较差。建议下载安装并使用 RealVNC VNC Viewer 连接。' : ''
+            }>
+                <Button type="primary" shape="round"
+                    disabled={!vncInfoLoaded}
+                    icon={<LinkOutlined />}
+                    onClick={() => {
+                        globalHooks.app.navigate({
+                            pathname: '/vnc-viewer',
+                            search: `addr=${vncIPAddr}&port=${vncPort}&password=${vncPasswd}`
+                        })
+                    }}
+                >
+                    用内置VNC Viewer连接
+                </Button>
+            </Tooltip>
         )
 
         return <Space style={{

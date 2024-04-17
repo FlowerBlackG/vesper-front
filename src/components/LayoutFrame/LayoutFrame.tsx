@@ -341,7 +341,7 @@ export default function LayoutFrame(
                 position: 'relative',
                 marginTop: 2,
                 marginLeft: 2,
-                borderTopLeftRadius: 4,
+                borderTopLeftRadius: 8,
                 border: 'solid 1px #aaa2',
             }} className={styles.MainElementShadow}>
                 { props.children }

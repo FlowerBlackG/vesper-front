@@ -84,14 +84,8 @@ export default function AppMain() {
                 
                             width: '100%',
                             height: '100%',
-
-                            margin: 16,
-
-                            background: '#4444',
-                            borderRadius: 6,
-                            boxShadow: '0px 6px 24px #0008',
                 
-                            backdropFilter: 'blur(4px)',
+                            backdropFilter: 'blur(6px)',
                             color: '#ffff'
                         }}
                     >
