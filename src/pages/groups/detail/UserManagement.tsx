@@ -4,7 +4,7 @@
  * 创建于 2024年4月1日 上海市嘉定区
  */
 
-import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Space, Spin, Table, Tooltip, message } from "antd"
+import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
 import { ensureGlobalData, globalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
 import { loadPageToLayoutFrame } from "../../../components/LayoutFrame/LayoutFrame"
@@ -15,13 +15,14 @@ import { HttpStatusCode } from "../../../utils/HttpStatusCode"
 import { useSearchParams } from "react-router-dom"
 import { later } from "../../../utils/later"
 import DateTimeUtils from "../../../utils/DateTimeUtils"
-import { UserEntity, UserGroupEntity } from "../../../api/Entities"
+import { SeatEntity, UserEntity, UserGroupEntity } from "../../../api/Entities"
 import { GroupPermission } from "../../../api/Permissions"
 import { PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from "@ant-design/icons"
 
 import '../../../index.css'
 import Dragger from "antd/es/upload/Dragger"
 import CSVSheet from "../../../utils/CSVSheet"
+import { CreateSeatsResponseDto } from "../../../api/SeatController"
 
 
 interface UserManagementProps {
@@ -322,6 +323,7 @@ interface AddMultipleUsersDialogProps {
 
 
 interface AddMultipleUsersTableEntry {
+    userId: number | null
     username: string
     seatId: number | null
     status: 'pending' | 'success' | 'failed'
@@ -330,10 +332,153 @@ interface AddMultipleUsersTableEntry {
 
 function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
 
+    const dropdownEntryForNoTemplate = {
+        label: '不使用模板',
+        value: -1
+    }
+
+
+    /* states */
+
     const [confirmLoading, setConfirmLoading] = useState(false)
     const [tableDataSource, setTableDataSource] = useState<AddMultipleUsersTableEntry[]>([])
     
     const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true)
+    const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
+    const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
+    const [dropdownEntries, setDropdownEntries] = useState([dropdownEntryForNoTemplate])
+
+
+    /* ctor */
+
+    useConstructor(constructor)
+    function constructor() {
+        loadSeatTemplates()
+    }
+
+    function loadSeatTemplates() {
+        request({
+            url: 'seat/seats',
+            params: {
+                groupId: props.groupId,
+                viewAllSeatsInGroup: false,
+                alsoSeatsInNonGroupMode: true,
+            },
+            vfOpts: {
+                giveResDataToCaller: true,
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true
+            }
+        }).then(res => {
+            dropdownEntries.length = 0
+            dropdownEntries.push(dropdownEntryForNoTemplate)
+            for (const it of res) {
+                dropdownEntries.push({
+                    label: `${it.id}: ${it.nickname}`,
+                    value: it.id
+                })
+            }
+            setDropdownEntries([...dropdownEntries])
+        }).catch(err => {}).finally(() => {
+            // do nothing...
+        })
+    }
+
+
+    function commitAddUsers() {
+        setConfirmLoading(true)
+
+        request({
+            url: 'group/addUsers',
+            method: 'post',
+            data: {
+                groupId: props.groupId,
+                usernames: tableDataSource.map(it => it.username)
+            },
+            vfOpts: {
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true,
+                giveResDataToCaller: true
+            }
+        }).then(untypedRes => {
+            type ResEntry = {
+                userId: number, 
+                username: string, 
+                success: boolean, 
+                msg: string
+            }
+            const res = untypedRes as ResEntry[]
+
+            const resMap = new Map<string, ResEntry>()
+
+            res.forEach(it => {
+                resMap.set(it.username, it)
+            })
+
+            for (const it of tableDataSource) {
+                const resEntity = resMap.get(it.username)
+                if (resEntity) {
+                    it.status = resEntity.success ? 'success' : 'failed'
+                    it.msg = resEntity.msg
+                    if (it.status === 'success') {
+                        it.userId = resEntity.userId
+                    }
+                }
+            }
+
+            setTableDataSource([...tableDataSource])
+        }).catch(err => {}).finally(() => {
+            if (alsoCreateSeats) {
+                createSeatsForUsers()
+            } else {
+                setConfirmLoading(false)
+            }
+        })
+    }
+
+
+    function createSeatsForUsers() {
+        if (!confirmLoading) {
+            setConfirmLoading(true)
+        }
+
+        request({
+            url: 'seat/new',
+            method: 'post',
+            data: {
+                group: props.groupId,
+                skel: templateSeatId === -1 ? undefined : templateSeatId,
+                users: tableDataSource
+                    .filter(it => it.status === 'success')
+                    .map(it => it.userId)
+            },
+            vfOpts: {
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true,
+                giveResDataToCaller: true
+            }
+        }).then(untypedRes => {
+            const res = untypedRes as CreateSeatsResponseDto
+            const successMap = new Map<number, SeatEntity>()  // userId -> SeatEntity
+            res.forEach(it => successMap.set(it.userId, it.seatInfo))
+            for (const tableIt of tableDataSource) {
+                if (tableIt.userId === null) {
+                    continue
+                }
+
+                if (successMap.has(tableIt.userId)) {
+                    tableIt.seatId = successMap.get(tableIt.userId)!.id
+                }
+            }
+
+            setTableDataSource([...tableDataSource])
+        }).catch(err => {}).finally(() => {
+            setConfirmLoading(false)
+        })
+    }
+
+
+    /* render */
 
     return <Drawer
         title="批量添加用户"
@@ -372,6 +517,7 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                     if (users !== null) {
                         for (let it of users) {
                             dataSource.push({
+                                userId: null,
                                 username: it,
                                 seatId: null,
                                 status: 'pending',
@@ -391,6 +537,53 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             <p className='ant-upload-text'>点击我 或 拖拽 CSV 文件到这里</p>
         </Dragger>
 
+        <Flex vertical style={{
+            marginTop: 16,
+            background: '#5cb3cc20',
+            padding: 16,
+            borderRadius: 8,
+        }}>
+            <Flex style={{flexShrink: 0}}>
+                <div style={{
+                    flexGrow: 1
+                }}>
+                    同时创建桌面环境
+                </div>
+                <Switch
+                    checked={alsoCreateSeats}
+                    onChange={(checked: boolean) => { setAlsoCreateSeats(checked) }}
+                />
+            </Flex>
+
+
+            <Flex
+                style={{
+                    marginTop: alsoCreateSeats ? 16 : 0,
+                    width: '100%',
+                    height: alsoCreateSeats ? 32 : 0,
+                    overflow: 'hidden',
+                    transition: '0.2s',
+                    alignItems: 'center'
+                }}
+            >
+                <p>模板</p>
+                <Select 
+                    style={{ 
+                        flexGrow: 1,
+                        marginLeft: 16
+                    }}
+                    variant='filled'
+                    options={dropdownEntries}
+                    value={templateSeatId}
+                    disabled={!alsoCreateSeats}
+                    onChange={(value) => {
+                        setTemplateSeatId(value)
+                    }}
+                />
+            </Flex>
+
+
+        </Flex>
 
         <Divider />
 
@@ -405,14 +598,6 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                     render: (_: any, record: AddMultipleUsersTableEntry) => {
                         const res = record.username
                         return res
-                    }
-                },
-                {
-                    title: '主机ID',
-                    dataIndex: 'seatId',
-                    key: 'seatId',
-                    render(it: string | null) {
-                        return it === null ? '无' : it
                     }
                 },
                 {
@@ -431,6 +616,22 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                         return <div style={style}>{record.msg}</div>
                     }
                 },
+                {
+                    title: '主机ID',
+                    dataIndex: 'seatId',
+                    key: 'seatId',
+                    render(it: string | null) {
+                        return it === null 
+                            ? 
+                            <div style={{color: '#ee3f4d'}}>
+                                未创建
+                            </div> 
+                            : 
+                            <div style={{color: '#41b349'}}>
+                                创建成功：{it}
+                            </div>
+                    }
+                },
             ]}
 
             dataSource={tableDataSource}
@@ -446,47 +647,7 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             shape='round'
             disabled={uploadButtonDisabled}
             onClick={() => {
-                setConfirmLoading(true)
-
-                request({
-                    url: 'group/addUsers',
-                    method: 'post',
-                    data: {
-                        groupId: props.groupId,
-                        usernames: tableDataSource.map(it => it.username)
-                    },
-                    vfOpts: {
-                        rejectNonOKResults: true,
-                        autoHandleNonOKResults: true,
-                        giveResDataToCaller: true
-                    }
-                }).then(untypedRes => {
-                    type ResEntry = {
-                        userId: number, 
-                        username: string, 
-                        success: boolean, 
-                        msg: string
-                    }
-                    const res = untypedRes as ResEntry[]
-
-                    const resMap = new Map<string, ResEntry>()
-
-                    res.forEach(it => {
-                        resMap.set(it.username, it)
-                    })
-
-                    for (const it of tableDataSource) {
-                        const resEntity = resMap.get(it.username)
-                        if (resEntity) {
-                            it.status = resEntity.success ? 'success' : 'failed'
-                            it.msg = resEntity.msg
-                        }
-                    }
-
-                    setTableDataSource([...tableDataSource])
-                }).catch(err => {}).finally(() => {
-                    setConfirmLoading(false)
-                })
+                commitAddUsers()
             }}
         >
             提交

@@ -33,7 +33,7 @@ export interface SeatEntity {
     userId: number
     groupId: number
     creator: number
-    enabled: number
+    seatEnabled: number
     nickname: string
     linuxUid: number
     linuxLoginName: number

@@ -17,6 +17,7 @@ import MyProfilePage from "../../pages/my-profile/MyProfile"
 import SeatsPage from "../../pages/seats/Seats"
 import SeatsSubPages from "../../pages/seats/SeatsSubPages"
 import SystemLoadPage from "../../pages/system-load/SystemLoad"
+import TestPage from "../../pages/test/Test"
 import UserManagementPage from "../../pages/user-management/UserManagement"
 import VNCViewerPage from "../../pages/vnc-viewer/VNCViewer"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
@@ -205,6 +206,17 @@ export default class PageRoutes {
             showInSidebar: false,
             showInHomePage: false,
             showBackButton: true,
+        },
+
+
+        {
+            path: '/test',
+            name: 'test',
+            icon: FluentUIEmojiProxy.colorSvg('desktop_computer_color'),
+            element: <TestPage />,
+            showInSidebar: false,
+            showInHomePage: false,
+            showBackButton: false,
         },
     ]
     

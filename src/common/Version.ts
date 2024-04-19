@@ -9,7 +9,7 @@ export default class Version {
     /**
      * 构建时间。遵循 ISO8601 格式。
      */
-    static buildTime = '2024-04-12T17:00+08:00'
+    static buildTime = '2024-04-19T21:39+08:00'
 
     private constructor() {}
 }

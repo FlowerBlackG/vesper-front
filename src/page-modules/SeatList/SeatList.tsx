@@ -221,7 +221,8 @@ export default function SeatList(props: SeatListProps) {
         request({
             url: 'seat/seats',
             params: {
-                groupId: groupMode ? groupId : undefined
+                groupId: groupMode ? groupId : undefined,
+                viewAllSeatsInGroup: true
             }
         }).then(res => {
             res = res as IResponse
