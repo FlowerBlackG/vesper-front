@@ -7,16 +7,17 @@
 import { useSearchParams } from 'react-router-dom'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import styles from './SeatsList.module.css'
-import React, { useState } from 'react'
+import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import { SeatEntity } from '../../api/Entities'
-import { Button, Input, Modal, Popover, Spin, Table, message } from 'antd'
+import { Button, Flex, Input, Modal, Popover, Spin, Table, message } from 'antd'
 import { IResponse, request } from '../../utils/request'
 import { DeleteOutlined } from '@ant-design/icons'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import { PageRouteData } from '../../common/PageRoutes/TypeDef'
 import { GroupPermission, Permission } from '../../api/Permissions'
+import { GetSeatsResponseDto, GetSeatsResponseDtoEntry } from '../../api/SeatController'
 
 
 export interface SeatListProps {
@@ -27,6 +28,12 @@ export interface SeatListProps {
 
     style?: React.CSSProperties
 }
+
+
+export type SeatListHandle = {
+    reloadTableData: () => void
+}
+
 
 /**
  * 环境列表页面。
@@ -40,18 +47,30 @@ export interface SeatListProps {
  * 
  * todo: 未完成。产品逻辑有待仔细考量。
  */
-export default function SeatList(props: SeatListProps) {
+export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
     const groupMode = props.groupId !== undefined
     const groupId = groupMode ? props.groupId : undefined
 
 
+    /* ref */
+
+    useImperativeHandle(ref, () => {
+        return {
+            reloadTableData() {
+                fetchData()
+            }
+        }
+    }, [])
+
+
     /* states */
+
     const [dataLoading, setDataLoading] = useState(false)
-    const [tableDataSource, setTableDataSource] = useState([] as any[])
+    const [tableDataSource, setTableDataSource] = useState<GetSeatsResponseDto>([])
 
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false)
-    const [deleteSeatEntity, setDeleteSeatEntity] = useState<SeatEntity | null>(null)
+    const [deleteSeatEntity, setDeleteSeatEntity] = useState<GetSeatsResponseDtoEntry | null>(null)
 
     /* constructor */
     useConstructor(constructor)
@@ -79,7 +98,7 @@ export default function SeatList(props: SeatListProps) {
             title: '主机',
             dataIndex: 'id',
             key: 'id',
-            render: (_: any, record: SeatEntity) => {
+            render: (_: any, record: GetSeatsResponseDtoEntry) => {
 
                 const ChangeNicknamePopover = () => {
                     const [confirmLoading, setConfirmLoading] = useState(false)
@@ -142,10 +161,19 @@ export default function SeatList(props: SeatListProps) {
             key: 'groupId',
         },
         {
+            title: '用户',
+            dataIndex: 'userId',
+            key: 'userId',
+            render(_: any, record: GetSeatsResponseDtoEntry) {
+                return `${record.username} (${record.userId})`
+            }
+        },
+        {
             title: 'linux账户',
             dataIndex: 'linuxUid',
             key: 'linuxUid',
-            render: (_: any, record: SeatEntity) => {
+            hidden: true,
+            render: (_: any, record: GetSeatsResponseDtoEntry) => {
                 return `${record.linuxLoginName} (${record.linuxUid})`
             }
         },
@@ -155,9 +183,21 @@ export default function SeatList(props: SeatListProps) {
             key: 'note'
         },
         {
+            title: '启用',
+            dataIndex: 'seatEnabled',
+            key: 'seatEnabled',
+            render: (_: any, seat: GetSeatsResponseDtoEntry) => {
+                return seat.seatEnabled
+                    ?
+                    <div style={{ color: '#41b349' }}>启用</div> 
+                    :
+                    <div style={{ color: '#ee3f4d' }}>停用</div> 
+            }
+        },
+        {
             title: '操作',
             key: 'user-op',
-            render(_: any, record: SeatEntity) {
+            render(_: any, record: GetSeatsResponseDtoEntry) {
                 let buttons = []
 
                 const buttonStyle = {
@@ -216,6 +256,7 @@ export default function SeatList(props: SeatListProps) {
 
 
     /* methods */
+
     function fetchData() {
         setDataLoading(true)
         request({
@@ -231,7 +272,7 @@ export default function SeatList(props: SeatListProps) {
                 return
             }
 
-            loadData(res.data as SeatEntity[])
+            loadData(res.data as GetSeatsResponseDto)
         }).catch(err => {})
         .finally(() => {
             setDataLoading(false)
@@ -239,8 +280,37 @@ export default function SeatList(props: SeatListProps) {
     }
 
 
-    function loadData(data: SeatEntity[]) {
+    function loadData(data: GetSeatsResponseDto) {
         setTableDataSource(data)
+    }
+
+
+    function setEnabledToAll(enabled: boolean) {
+        if (!groupMode) {
+            return
+        }
+
+        setDataLoading(true)
+        request({
+            url: 'seat/enable',
+            method: 'POST',
+            data: {
+                groupId: groupId,
+                enabled: enabled,
+                alsoQuit: true
+            },
+            vfOpts: {
+                rejectNonOKResults: true, 
+                autoHandleNonOKResults: true,
+                giveResDataToCaller: true,
+            }
+        }).then(res => {
+            globalHooks.app.message.success('操作成功')
+            fetchData()
+        }).catch(_ => {
+            setDataLoading(false)
+        })
+
     }
 
 
@@ -258,17 +328,25 @@ export default function SeatList(props: SeatListProps) {
         height: '100%',
     } as React.CSSProperties
 
+    const toolboxHeight = groupMode ? '48px' : '0'
 
     return <div
         style={containerStyle}
         className='overflow-y-overlay overflow-x-overlay'
-    ><Spin spinning={ dataLoading }>
+    >
+        <div style={{
+            flexGrow: 1,
+            flexShrink: 0,
+            height: `calc(100% - ${toolboxHeight})`
+        }} className='overflow-y-overlay'>
+            <Spin spinning={ dataLoading }>
+                <Table
+                    columns={tableColumns}
+                    dataSource={tableDataSource}
+                />
+            </Spin>
+        </div>
 
-
-        <Table
-            columns={tableColumns}
-            dataSource={tableDataSource}
-        />
 
         { /* delete seat dialog */ }
         <Modal
@@ -302,7 +380,7 @@ export default function SeatList(props: SeatListProps) {
 
                     if (thisRes.success) {
                         setDeleteSeatEntity(null)
-                        tableDataSource.splice(tableDataSource.indexOf(deleteSeatEntity))
+                        tableDataSource.splice(tableDataSource.indexOf(deleteSeatEntity!), 1)
                         setTableDataSource([...tableDataSource])
                         globalHooks.app.message.success('删除成功')
                     } else {
@@ -319,7 +397,34 @@ export default function SeatList(props: SeatListProps) {
 
         </Modal>
 
-    </Spin></div>
+
+        {
+            /* tools for group mode */
+
+            groupMode &&
+            <Flex style={{
+                flexShrink: 0,
+                height: toolboxHeight,
+                padding: 8
+            }}>
+                <Button 
+                    shape='round' ghost type='primary' danger onClick={() => setEnabledToAll(false)}
+                    disabled={dataLoading}
+                >
+                    全部禁用并退出登录
+                </Button>
+
+                <div style={{width: 8}} />
+
+                <Button shape='round' ghost type='primary' onClick={() => setEnabledToAll(true)}
+                    disabled={dataLoading}
+                >
+                    全部启用
+                </Button>
+            </Flex>
+        }
+
+    </div>
     
 
-}
+})

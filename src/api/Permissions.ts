@@ -14,8 +14,6 @@
  */
 export enum Permission {
  
-    
-
     UNDEFINED = 0,
 
     /**
@@ -59,9 +57,9 @@ export enum Permission {
     LOGIN_TO_DISABLED_SEAT = 204,
 
     /**
-     * 禁用或启用主机
+     * 禁用或启用主机。同时包含强制关闭主机的能力
      */
-    DISABLE_OR_ENABLE_SEAT = 205,
+    DISABLE_OR_ENABLE_ANY_SEAT = 205,
 
     /**
      * 创建组。包含删除自己组的权限。创建后，自动获取组内一切权限
@@ -79,7 +77,6 @@ export enum Permission {
 
 export enum GroupPermission {
 
-    
     UNDEFINED = 0,
 
     /**
@@ -118,15 +115,14 @@ export enum GroupPermission {
     LOGIN_TO_DISABLED_SEAT = 203,
 
     /**
-     * 禁用或启用主机
+     * 禁用或启用主机。同时包含强制关闭主机的能力
      */
-    DISABLE_OR_ENABLE_SEAT = 204,
+    DISABLE_OR_ENABLE_ANY_SEAT = 204,
 
     /**
      * 收集指定位置的文件
      */
     COLLECT_FILES = 300,
-
 
 
 }

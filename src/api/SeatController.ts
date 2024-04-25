@@ -14,3 +14,10 @@ export interface CreateSeatsResponseDtoEntry {
 }
 
 export type CreateSeatsResponseDto =  CreateSeatsResponseDtoEntry[]
+
+
+export type GetSeatsResponseDtoEntry = {
+    username: string
+} & SeatEntity
+
+export type GetSeatsResponseDto = GetSeatsResponseDtoEntry[]

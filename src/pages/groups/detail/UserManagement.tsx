@@ -4,7 +4,7 @@
  * 创建于 2024年4月1日 上海市嘉定区
  */
 
-import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
+import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Popconfirm, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
 import { ensureGlobalData, globalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
 import { loadPageToLayoutFrame } from "../../../components/LayoutFrame/LayoutFrame"
@@ -15,7 +15,7 @@ import { HttpStatusCode } from "../../../utils/HttpStatusCode"
 import { useSearchParams } from "react-router-dom"
 import { later } from "../../../utils/later"
 import DateTimeUtils from "../../../utils/DateTimeUtils"
-import { SeatEntity, UserEntity, UserGroupEntity } from "../../../api/Entities"
+import { GroupPermissionEntity, GroupPermissionGrantEntity, SeatEntity, UserEntity, UserGroupEntity } from "../../../api/Entities"
 import { GroupPermission } from "../../../api/Permissions"
 import { PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from "@ant-design/icons"
 
@@ -24,9 +24,12 @@ import Dragger from "antd/es/upload/Dragger"
 import CSVSheet from "../../../utils/CSVSheet"
 import { CreateSeatsResponseDto } from "../../../api/SeatController"
 
+import styles from './UserManagement.module.css'
+
 
 interface UserManagementProps {
     groupId: number | null | undefined
+    afterAddSeats?: () => void
 }
 
 export function UserManagement(props: UserManagementProps) {
@@ -42,9 +45,10 @@ export function UserManagement(props: UserManagementProps) {
     const [addUserDialogConfirmLoading, setAddUserDialogConfirmLoading] = useState(false)
     const [addUsersDialogConfirmLoading, setAddUsersDialogConfirmLoading] = useState(false)
 
+    const [addSeatDrawerTargetUser, setAddSeatDrawerTargetUser] = useState<UserEntity | null>(null)
 
-    const [addSeatDrawerOpen, setAddSeatDrawerOpen] = useState(false)
-    const [addSeatDrawerTargetUser, setAddSeatDrawerTargetUser] = useState(-1)
+    const [permissionViewerTargetUser, setPermissionViewerTargetUser] = useState<UserEntity | null>(null)
+
 
     /* hooks */
 
@@ -92,16 +96,65 @@ export function UserManagement(props: UserManagementProps) {
 
                 if (hasPermission(GroupPermission.CREATE_OR_DELETE_SEAT)) {
                     buttons.push(
-                        <Button
-                            type="primary"
+                        <Button ghost style={{margin: 2}}
+                            type="primary" shape="round"
                             icon={ <PlusOutlined /> }
                             onClick={() => {
-                                setAddSeatDrawerTargetUser(record.id)
-                                setAddSeatDrawerOpen(true)
+                                setAddSeatDrawerTargetUser(record)
                             }}
                         >
-                            主机环境
+                            创建环境
                         </Button>
+                    )
+                }
+
+                buttons.push(
+                    <Button style={{ margin: 2 }}
+                        type="primary"
+                        shape="round" ghost
+                        onClick={() => {
+                            setPermissionViewerTargetUser(record)
+                        }}
+                    >
+                        权限
+                    </Button>
+                )
+
+                if (hasPermission(GroupPermission.ADD_OR_REMOVE_USER)) {
+                    buttons.push(
+                        <Popconfirm title='确定？' cancelText='算了' okText='嗯！'
+                            style={{
+                                margin: 2
+                            }}
+                            onConfirm={() => {
+                                setPageLoading(true)
+                                request({
+                                    url: 'group/removeUser',
+                                    data: {
+                                        userId: record.id,
+                                        groupId: props.groupId
+                                    },
+                                    method: 'post',
+                                    vfOpts: {
+                                        rejectNonOKResults: true,
+                                        autoHandleNonOKResults: true,
+                                        giveResDataToCaller: true
+                                    }
+                                }).then(res => {
+                                    globalHooks.app.message.success('操作成功')
+                                    fetchData()
+                                    if (props.afterAddSeats) {
+                                        props.afterAddSeats()
+                                    }
+                                }).catch(_ => {
+                                    setPageLoading(false)
+                                })
+                            }}
+                        >
+                            <Button danger type="primary" shape="round" ghost>
+                                踢掉
+                            </Button>
+                        </Popconfirm>
                     )
                 }
 
@@ -208,58 +261,10 @@ export function UserManagement(props: UserManagementProps) {
             confirmLoading={addUserDialogConfirmLoading}
             onCancel={() => setAddUserDialogOpen(false)}
         >
-            { /* todo */ }
+            暂不支持
         </Modal>
     }
 
-
-    function addSeatDrawer() {
-        return <Drawer title="添加桌面环境"
-            open={ addSeatDrawerOpen }
-            
-            onClose={() => setAddSeatDrawerOpen(false)}
-            destroyOnClose={ true }
-            extra={
-                <Space>
-                    <Button 
-                        onClick={() => setAddSeatDrawerOpen(false)}
-                    >
-                        取消
-                    </Button>
-                    <Button 
-                        type="primary"
-                        onClick={() => {
-                            // todo
-                            request({
-                                url: 'seat/new',
-                                data: {
-                                    group: props.groupId,
-                                    users: [addSeatDrawerTargetUser],
-                                    note: `desktop env for user: ${addSeatDrawerTargetUser}`
-                                },
-                                method: 'post',
-                                vfOpts: {
-                                    rejectNonOKResults: true,
-                                    autoHandleNonOKResults: true,
-                                    giveResDataToCaller: true
-                                }
-                            }).then(res => {
-                                // todo
-                                
-                            }).catch(() => {}).finally(() => {
-                                setAddSeatDrawerOpen(false)
-                            })
-                        }}
-
-                    >
-                        添加
-                    </Button>
-                </Space>
-            }
-        >
-
-        </Drawer>
-    }
 
     const toolboxHeight = '48px'
     return <Flex
@@ -305,51 +310,50 @@ export function UserManagement(props: UserManagementProps) {
             onClose={() => {
                 setAddUsersDialogOpen(false)
             }}
+            afterAddSeats={props.afterAddSeats}
         />
-        { addSeatDrawer() }
+
+        <AddSingleSeatDialog
+            onClose={() => setAddSeatDrawerTargetUser(null)}
+            user={addSeatDrawerTargetUser}
+            groupId={props.groupId}
+            afterAddSeats={props.afterAddSeats}
+        />
+
+        <PermissionViewer 
+            groupId={props.groupId}    
+            onClose={() => {setPermissionViewerTargetUser(null)}}
+            user={permissionViewerTargetUser}
+        />
 
     </Flex>
-}
+} // export function UserManagement(props: UserManagementProps)
 
 
+/* ================ shared components ================ */
 
-/* ------------ add multiple users dialog ------------ */
+// use template
 
-interface AddMultipleUsersDialogProps {
+interface SeatTemplateSelectorProps {
+    withTopMargin: boolean
     groupId: number
-    open: boolean
-    onClose: () => void
+    show: boolean
+    onSelect: (templateSeatId: number) => any
 }
-
-
-interface AddMultipleUsersTableEntry {
-    userId: number | null
-    username: string
-    seatId: number | null
-    status: 'pending' | 'success' | 'failed'
-    msg: string
-}
-
-function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
+function SeatTemplateSelector(props: SeatTemplateSelectorProps) {
+    
+    // states
 
     const dropdownEntryForNoTemplate = {
         label: '不使用模板',
         value: -1
     }
 
-
-    /* states */
-
-    const [confirmLoading, setConfirmLoading] = useState(false)
-    const [tableDataSource, setTableDataSource] = useState<AddMultipleUsersTableEntry[]>([])
-    
-    const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true)
-    const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
-    const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
+    const [templateSeatId, setTemplateSeatId] = useState(-1)
+    const [loading, setLoading] = useState(false)
     const [dropdownEntries, setDropdownEntries] = useState([dropdownEntryForNoTemplate])
 
-
-    /* ctor */
+    // ctor
 
     useConstructor(constructor)
     function constructor() {
@@ -383,6 +387,142 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             // do nothing...
         })
     }
+
+    // render
+
+    return <Flex
+        style={{
+            marginTop: (props.withTopMargin && props.show) ? 16 : 0,
+            width: '100%',
+            height: props.show ? 32 : 0,
+            overflow: 'hidden',
+            transition: '0.2s',
+            alignItems: 'center'
+        }}
+    >
+        <p>模板</p>
+        <Select 
+            style={{ 
+                flexGrow: 1,
+                marginLeft: 16
+            }}
+            variant='filled'
+            options={dropdownEntries}
+            value={templateSeatId}
+            disabled={!props.show}
+            onChange={(value) => {
+                setTemplateSeatId(value)
+                props.onSelect(value)
+            }}
+        />
+    </Flex>
+}
+
+
+/* ------------ add single seat dialog ------------ */
+
+interface AddSingleSeatDialogProps {
+    onClose: () => void
+    user: UserEntity | null
+    groupId: number
+    afterAddSeats?: () => void
+}
+
+function AddSingleSeatDialog(props: AddSingleSeatDialogProps) {
+    const [loading, setLoading] = useState(false)
+    const [templateSeatId, setTemplateSeatId] = useState(-1)
+
+    return <Drawer
+        title="创建桌面环境"
+        size='large'
+        onClose={props.onClose}
+        open={props.user !== null}
+        destroyOnClose={true}
+    >
+        <p>目标用户：{props.user?.username}</p>
+        
+        <Divider />
+
+        <SeatTemplateSelector
+            show withTopMargin={false} groupId={props.groupId}
+            onSelect={(value) => {
+                setTemplateSeatId(value)
+            }}
+        />
+
+        <Divider />
+
+        <Spin spinning={loading}>
+            <Button
+                style={{
+                    width: '100%'
+                }}
+                disabled={loading}
+                type="primary" shape="round"
+                onClick={() => {
+                    setLoading(true)
+                    request({
+                        url: 'seat/new',
+                        data: {
+                            group: props.groupId,
+                            users: [props.user?.id],
+                            skel: templateSeatId === -1 ? undefined : templateSeatId,
+                            note: `${props.user?.username}在第${props.groupId}组的桌面环境`
+                        },
+                        method: 'post',
+                        vfOpts: {
+                            rejectNonOKResults: true,
+                            autoHandleNonOKResults: true,
+                            giveResDataToCaller: true
+                        }
+                    }).then(_ => {
+                        globalHooks.app.message.success('创建成功')
+                        if (props.afterAddSeats) {
+                            props.afterAddSeats()
+                        }
+                        
+                    }).catch(() => {}).finally(() => {
+                        setLoading(false)
+                        props.onClose()
+                    })
+                }}
+            >
+                创建
+            </Button>
+        </Spin>
+
+    </Drawer>
+}
+
+
+/* ------------ add multiple users dialog ------------ */
+
+interface AddMultipleUsersDialogProps {
+    groupId: number
+    open: boolean
+    onClose: () => void
+    afterAddSeats?: () => void
+}
+
+
+interface AddMultipleUsersTableEntry {
+    userId: number | null
+    username: string
+    seatId: number | null
+    status: 'pending' | 'success' | 'failed'
+    msg: string
+}
+
+function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
+
+    /* states */
+
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [tableDataSource, setTableDataSource] = useState<AddMultipleUsersTableEntry[]>([])
+    
+    const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true)
+    const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
+    const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
 
 
     function commitAddUsers() {
@@ -472,6 +612,10 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             }
 
             setTableDataSource([...tableDataSource])
+
+            if (props.afterAddSeats) {
+                props.afterAddSeats()
+            }
         }).catch(err => {}).finally(() => {
             setConfirmLoading(false)
         })
@@ -555,32 +699,14 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                 />
             </Flex>
 
-
-            <Flex
-                style={{
-                    marginTop: alsoCreateSeats ? 16 : 0,
-                    width: '100%',
-                    height: alsoCreateSeats ? 32 : 0,
-                    overflow: 'hidden',
-                    transition: '0.2s',
-                    alignItems: 'center'
+            <SeatTemplateSelector
+                withTopMargin={true}
+                groupId={props.groupId}
+                onSelect={(value) => {
+                    setTemplateSeatId(value)
                 }}
-            >
-                <p>模板</p>
-                <Select 
-                    style={{ 
-                        flexGrow: 1,
-                        marginLeft: 16
-                    }}
-                    variant='filled'
-                    options={dropdownEntries}
-                    value={templateSeatId}
-                    disabled={!alsoCreateSeats}
-                    onChange={(value) => {
-                        setTemplateSeatId(value)
-                    }}
-                />
-            </Flex>
+                show={alsoCreateSeats}
+            />
 
 
         </Flex>
@@ -657,3 +783,132 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
     </Spin></Drawer>
 }
 
+
+interface PermissionViewerProps {
+    onClose: () => any
+    user: UserEntity | null
+    groupId: number
+}
+
+function PermissionViewer(props: PermissionViewerProps) {
+
+    const [allPermissions, setAllPermissions] = useState<GroupPermissionEntity[]>([])
+    const [userPermissions, setUserPermissions] = useState<GroupPermission[]>([])
+    const [grantPermissionLoading, setGrantPermissionLoading] = useState<GroupPermission[]>([])
+    const [user, setUser] = useState<UserEntity | null>(null)
+
+    if (user !== props.user) {
+        setUser(props.user)
+        setUserPermissions([])
+
+        if (props.user !== null) {
+            request({
+                url: 'group/permissions',
+                params: {
+                    userId: props.user?.id,
+                    groupId: props.groupId
+                },
+                vfOpts: {
+                    rejectNonOKResults: true,
+                    autoHandleNonOKResults: true,
+                    giveResDataToCaller: true
+                }
+            }).then(untypedRes => {
+                const res = untypedRes as GroupPermissionGrantEntity[]
+                setUserPermissions(res.map(it => it.permissionId))
+            }).catch(_ => {})
+        }
+    }
+
+    if (allPermissions.length === 0) {
+        request({
+            url: 'group/allPermissions',
+            vfOpts: {
+                rejectNonOKResults: true, 
+                autoHandleNonOKResults: true, 
+                giveResDataToCaller: true
+            }
+        }).then(res => {
+            setAllPermissions(res)
+        }).catch(_ => {})
+    }
+
+    return <Drawer open={props.user !== null}
+        size="large"
+        title="组内权限"
+        destroyOnClose={true}
+        onClose={props.onClose}
+    >
+        <p>用户：{user?.username} ({user?.id})</p>
+        <Divider />
+
+        <table rules='none' cellPadding={12}>
+            {
+                allPermissions.map((it) => {
+                    return <tr className={styles.tableRow}> 
+                        <td className={styles.tableCell}>{it.id}</td>
+                        <td className={styles.tableCell}>{it.enumKey}</td>
+                        
+                        <td className={styles.tableCell}>
+                            {it.note}
+                        </td>
+                        <td className={styles.tableCell}>
+                            <Switch
+                                disabled={ 
+                                    !globalData.groupPermissions.contains(props.groupId, GroupPermission.GRANT_PERMISSION)
+                                }
+                                checked={
+                                    userPermissions.includes(it.id)
+                                }
+                                loading={
+                                    grantPermissionLoading.includes(it.id)
+                                }
+                                onChange={(checked: boolean, event: any) => {
+                                    if (!grantPermissionLoading.includes(it.id)) {
+                                        grantPermissionLoading.push(it.id)
+                                        setGrantPermissionLoading([...grantPermissionLoading])
+                                    }
+
+                                    request({
+                                        url: 'group/grantPermission',
+                                        data: {
+                                            permission: it.id,
+                                            grant: checked,
+                                            targetUserId: props.user?.id,
+                                            groupId: props.groupId
+                                        },
+                                        method: 'post',
+                                        vfOpts: {
+                                            rejectNonOKResults: true,
+                                            autoHandleNonOKResults: true,
+                                            giveResDataToCaller: true
+                                        }
+                                    }).then(res => {
+
+                                        message.success('赋权编辑成功')
+
+                                        if (checked) {
+                                            userPermissions.push(it.id)
+                                        } else {
+                                            userPermissions.splice(
+                                                userPermissions.indexOf(it.id), 1
+                                            )
+                                        }
+                                        setUserPermissions([...userPermissions])
+
+                                    }).catch(_ => {}).finally(() => {
+                                        grantPermissionLoading.splice(
+                                            grantPermissionLoading.indexOf(it.id), 1
+                                        )
+                                        setGrantPermissionLoading([...grantPermissionLoading])
+                                    })
+                                }}
+                            />
+                        </td>
+                    </tr>
+                })
+            }
+        </table>
+
+    </Drawer>
+}

@@ -12,7 +12,7 @@ import { useConstructor } from "../../../utils/react-functional-helpers"
 import { SeatEntity } from "../../../api/Entities"
 import { request } from "../../../utils/request"
 import { useSearchParams } from "react-router-dom"
-import { Button, Card, Descriptions, Flex, Space, Spin, Tooltip, message } from "antd"
+import { Button, Card, Descriptions, Flex, Input, Popover, Space, Spin, Tooltip, message } from "antd"
 import styles from './Detail.module.css'
 import DateTimeUtils from "../../../utils/DateTimeUtils"
 import { DesktopOutlined, LinkOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
@@ -57,6 +57,9 @@ export default function DetailPage() {
     
     const [vncConnInfoRefreshing, setVncConnInfoRefreshing] = useState(false)
 
+
+    const [launchVesperDisplayWidth, setLaunchVesperDisplayWidth] = useState(1280)
+    const [launchVesperDisplayHeight, setLaunchVesperDisplayHeight] = useState(720)
 
     /* ctor */
     function constructor() {
@@ -450,40 +453,66 @@ export default function DetailPage() {
         )
 
         buttons.push(
-            <Button
-                type="primary"
-                shape="round"
-                disabled={!opBtnReady}
-                icon={ <DesktopOutlined /> }
-                onClick={() => {
-                    setOpBtnReady(false)
-                    setVesperCoreStatus('unknown')
-                    setVesperLauncherStatus('unknown')
-                    request({
-                        url: 'seat/launchVesper',
-                        method: 'post',
-                        data: {
-                            seatId: seatId
-                        },
-                        vfOpts: {
-                            giveResDataToCaller: true,
-                            rejectNonOKResults: true,
-                            autoHandleNonOKResults: true
-                        }
-                    }).then(res => {
-                        if (res.vesperIP !== '0.0.0.0') {
-                            setVncIPAddr(res.vesperIP)
-                        }
-                        setVncPort(res.vesperPort)
-                        setVncPasswd(res.vncPassword)
-                        setVncInfoLoaded(true)
-                    }).catch(err => {}).finally(() => {
-                        setOpBtnReady(true)
-                    })
-                }}
-            >
-                启动 vesper
-            </Button>
+            <Popover content={
+                <Flex vertical>
+                    <p>分辨率</p>
+                    <Flex style={{alignItems: 'center'}}>
+                        <Input
+                            type='number'
+                            value={launchVesperDisplayWidth}
+                            onChange={(event) => {
+                                setLaunchVesperDisplayWidth(Number(event.target.value))
+                            }}
+                        />
+                        <div style={{ margin: 4 }}>×</div>
+                        <Input
+                            type='number'
+                            value={launchVesperDisplayHeight}
+                            onChange={(event) => {
+                                setLaunchVesperDisplayHeight(Number(event.target.value))
+                            }}
+                        />
+                    </Flex>
+                </Flex>
+            }>
+
+                <Button
+                    type="primary"
+                    shape="round"
+                    disabled={!opBtnReady}
+                    icon={ <DesktopOutlined /> }
+                    onClick={() => {
+                        setOpBtnReady(false)
+                        setVesperCoreStatus('unknown')
+                        setVesperLauncherStatus('unknown')
+                        request({
+                            url: 'seat/launchVesper',
+                            method: 'post',
+                            data: {
+                                seatId: seatId,
+                                displayWidth: launchVesperDisplayWidth,
+                                displayHeight: launchVesperDisplayHeight
+                            },
+                            vfOpts: {
+                                giveResDataToCaller: true,
+                                rejectNonOKResults: true,
+                                autoHandleNonOKResults: true
+                            }
+                        }).then(res => {
+                            if (res.vesperIP !== '0.0.0.0') {
+                                setVncIPAddr(res.vesperIP)
+                            }
+                            setVncPort(res.vesperPort)
+                            setVncPasswd(res.vncPassword)
+                            setVncInfoLoaded(true)
+                        }).catch(err => {}).finally(() => {
+                            setOpBtnReady(true)
+                        })
+                    }}
+                >
+                    启动 vesper
+                </Button>
+            </Popover>
         )
 
         buttons.push(

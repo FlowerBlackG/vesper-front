@@ -150,7 +150,7 @@ export default class PageRoutes {
 
         {
             path: '/groups/detail',
-            name: '详情',
+            name: '群组详情',
             element: <GroupsSubPages.DetailPage />,
             icon: FluentUIEmojiProxy.colorSvg('bagel_color'),
             inFrame: true,

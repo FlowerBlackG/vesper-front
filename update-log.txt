@@ -1,12 +1,12 @@
-version tag  : 
-version code : 
-build time   : 
+version tag  : 0.0.2-dev
+version code : 2
+build time   : 2024-04-25T16:26+08:00
 update log   :
 
+Group Management:
++ Manage group members' permissions
 
+Seat List:
++ Support force reload table.
 --------------------------------
 
-version tag  : 
-version code : 
-build time   : 
-update log   :

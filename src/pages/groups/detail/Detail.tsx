@@ -10,8 +10,8 @@ import styles from './Detail.module.css'
 import { useConstructor } from '../../../utils/react-functional-helpers'
 import { ensureGlobalData, globalHooks } from '../../../common/GlobalData'
 import { Card, Descriptions, Flex, Spin } from 'antd'
-import SeatList from '../../../page-modules/SeatList/SeatList'
-import { useState } from 'react'
+import {SeatList, SeatListHandle} from '../../../page-modules/SeatList/SeatList'
+import { useRef, useState } from 'react'
 import { UserGroupEntity } from '../../../api/Entities'
 import { request } from '../../../utils/request'
 import DateTimeUtils from '../../../utils/DateTimeUtils'
@@ -27,6 +27,10 @@ export default function DetailPage() {
 
     const [searchParams, setSearchParams] = useSearchParams()
     const message = globalHooks.app.message
+
+    /* ref */
+
+    const seatListRef = useRef(null) as React.RefObject<SeatListHandle> | null
 
     /* states */
 
@@ -120,11 +124,15 @@ export default function DetailPage() {
         <GroupBasicInfo />
 
         <DetailCard title='用户' width='100%' height={400}>
-            <UserManagement groupId={groupId} />
+            <UserManagement groupId={groupId} 
+                afterAddSeats={() => {
+                    seatListRef?.current?.reloadTableData()
+                }}
+            />
         </DetailCard>
 
         <DetailCard title='桌面环境' width='100%' height={400}>
-            <SeatList groupId={groupId} />
+            <SeatList groupId={groupId} ref={seatListRef} />
         </DetailCard>
 
         <div style={{ height: 64 }} />

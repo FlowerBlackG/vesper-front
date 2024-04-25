@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: MulanPSL-2.0 */
+
+/*
+
+    创建于2024年4月25日 上海市嘉定区安亭镇
+*/
+
+@import '../../../index.css';
+
+
+.tableRow:nth-child(odd) {
+    background-color: #c6e6e8a0;
+}
+
+.tableRow:nth-child(even) {
+
+}
+
+.tableCell {
+    
+}

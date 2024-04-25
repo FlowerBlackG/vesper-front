@@ -6,7 +6,7 @@
 */
 
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
-import SeatList from '../../page-modules/SeatList/SeatList'
+import {SeatList} from '../../page-modules/SeatList/SeatList'
 
 
 export default function SeatsPage() {
