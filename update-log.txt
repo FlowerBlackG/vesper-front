@@ -1,7 +1,27 @@
-version tag  : 0.0.2-dev
-version code : 2
-build time   : 2024-04-25T16:26+08:00
-update log   :
+version  tag  : 0.0.3-dev
+version  code : 3
+complete time : 2024-04-27T17:07+08:00
+update   log  :
+
+New page:
++ Update Log page
+
+About page:
++ Now it trys to load and show user's name to frame.
+* Change target of "Show OSL" to Mulan PSL2's website.
+
+VNC Viewer page:
+* Downgrade image quality to gain performance.
+* Set higher compression level to save network bandwidth.
++ Load VNC's name to frame.
++ Show hints when connected or disconnected.
+--------------------------------
+
+
+version  tag  : 0.0.2-dev
+version  code : 2
+complete time : 2024-04-25T16:26+08:00
+update   log  :
 
 Group Management:
 + Manage group members' permissions

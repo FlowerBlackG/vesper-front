@@ -18,6 +18,7 @@ import SeatsPage from "../../pages/seats/Seats"
 import SeatsSubPages from "../../pages/seats/SeatsSubPages"
 import SystemLoadPage from "../../pages/system-load/SystemLoad"
 import TestPage from "../../pages/test/Test"
+import { UpdateLogPage } from "../../pages/update-log/UpdateLog"
 import UserManagementPage from "../../pages/user-management/UserManagement"
 import VNCViewerPage from "../../pages/vnc-viewer/VNCViewer"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
@@ -189,6 +190,15 @@ export default class PageRoutes {
             category: categoryKeys.vesperCenterControlPanel,
         },
     
+
+        {
+            path: '/update-log',
+            name: '更新日志',
+            icon: FluentUIEmojiProxy.colorSvg('bookmark_tabs_color'),
+            element: <UpdateLogPage />,
+            category: categoryKeys.vesperCenterControlPanel,
+        },
+
         {
             path: '/about',
             name: '关于',

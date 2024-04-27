@@ -12,6 +12,7 @@ import { ensureGlobalData, globalHooks } from "../../common/GlobalData";
 import { useSearchParams } from "react-router-dom";
 import { later } from "../../utils/later";
 import { useState } from "react";
+import { Skeleton } from "antd";
 
 
 
@@ -72,6 +73,18 @@ export default function VNCViewerPage() {
                 credentials: {
                     password: vncPassword
                 }
+            }}
+            compressionLevel={5}  // noVNC's default is 2
+            qualityLevel={5}  // noVNC's default is 6
+            onDisconnect={(e) => {
+                globalHooks.app.message.error('连接断开')
+                globalHooks.layoutFrame.setTitle(`${pageEntity.title}`)
+            }}
+            onConnect={(rfb) => {
+                globalHooks.app.message.success('已连接')
+            }}
+            onDesktopName={(e) => {
+                globalHooks.layoutFrame.setTitle(`${e?.detail.name} - ${pageEntity.title}`)
             }}
         />
     

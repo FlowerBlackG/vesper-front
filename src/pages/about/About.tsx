@@ -3,7 +3,7 @@
 /* 上财果团团 */
 
 import React, { useState } from 'react';
-import { globalData } from '../../common/GlobalData';
+import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData';
 import Version from '../../common/Version';
 import DateTimeUtils from '../../utils/DateTimeUtils';
 import { HttpStatusCode } from '../../utils/HttpStatusCode';
@@ -41,7 +41,9 @@ export function AboutPage() {
     useConstructor(constructor)
     function constructor() {
 
-        loadPageToLayoutFrame(pageEntity)
+        globalHooks.layoutFrame.loadPageEntity(pageEntity)
+
+        ensureGlobalData({dontReject: true, dontResolve: true})
 
         request({
             url: 'vesperCenter/version'
@@ -123,7 +125,7 @@ export function AboutPage() {
             }}
 
             onClick={() => {
-                const w = window.open('https://guotuan.gardilily.com/guo-common/opensource-licenses.php')
+                const w = window.open('http://license.coscl.org.cn/MulanPSL2')
                 
             }}
         >
