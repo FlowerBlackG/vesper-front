@@ -112,7 +112,8 @@ export default class PageRoutes {
             showInSidebar: true,
             category: categoryKeys.user,
             permissionCheckPassed: () => {
-                return globalData.userPermissions.includes(Permission.CREATE_AND_DELETE_USER)
+                return globalData.userPermissions.has(Permission.CREATE_AND_DELETE_USER)
+                    || globalData.userPermissions.has(Permission.GRANT_PERMISSION)
             }
         },
     

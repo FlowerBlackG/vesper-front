@@ -59,7 +59,7 @@ function vesperCenterNonOkResultDefaultHandler(res: IResponse) {
 }
 
 
-type VFRequestCtrlOptions = {
+export type VFRequestCtrlOptions = {
 
     useDefaultUnauthorizedExceptionHandler?: boolean
     useOriginalResult?: boolean

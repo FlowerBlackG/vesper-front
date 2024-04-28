@@ -1,3 +1,18 @@
+version  tag  : 1.0.0
+version  code : 4
+complete time : 2024-04-28T16:21+08:00
+update   log  :
+
+Bugfix:
+* Fix the bug which prevents super admin who doesn't have permission "CREATE_AND_DELETE_USER" from viewing user management page.
+
+SeatList Module:
+* New button added: Single-click login to desktop environment.
+
+--------------------------------
+
+
+
 version  tag  : 0.0.3-dev
 version  code : 3
 complete time : 2024-04-27T17:07+08:00

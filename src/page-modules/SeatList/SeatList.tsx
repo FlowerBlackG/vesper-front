@@ -11,13 +11,14 @@ import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import { SeatEntity } from '../../api/Entities'
-import { Button, Flex, Input, Modal, Popover, Spin, Table, message } from 'antd'
-import { IResponse, request } from '../../utils/request'
+import { Button, Drawer, Flex, Input, Modal, Popover, Spin, StepProps, Steps, Table, message } from 'antd'
+import { IResponse, VFRequestCtrlOptions, VFRequestParams, request } from '../../utils/request'
 import { DeleteOutlined } from '@ant-design/icons'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import { PageRouteData } from '../../common/PageRoutes/TypeDef'
 import { GroupPermission, Permission } from '../../api/Permissions'
 import { GetSeatsResponseDto, GetSeatsResponseDtoEntry } from '../../api/SeatController'
+import Config from '../../common/Config'
 
 
 export interface SeatListProps {
@@ -71,6 +72,8 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false)
     const [deleteSeatEntity, setDeleteSeatEntity] = useState<GetSeatsResponseDtoEntry | null>(null)
+
+    const [singleClickLoginSeat, setSingleClickLoginSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
 
     /* constructor */
     useConstructor(constructor)
@@ -220,6 +223,16 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
                         )
                     )
                 ) {
+
+
+                    buttons.push(
+                        <Button type='primary' shape='round' style={buttonStyle}
+                            onClick={() => { setSingleClickLoginSeat(record) }}
+                        >
+                            登录
+                        </Button>
+                    )
+
                     buttons.push(
                         <Button type='primary' shape='round' style={buttonStyle}
                             onClick={() => {
@@ -229,9 +242,10 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
                                 })
                             }}
                         >
-                            进入
+                            详细
                         </Button>
                     )
+
                 }
 
                 buttons.push(
@@ -424,7 +438,281 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             </Flex>
         }
 
+        <SingleClickLoginDialog seat={singleClickLoginSeat}
+            onClose={() => {setSingleClickLoginSeat(null)}}
+        />
+
     </div>
     
 
 })
+
+
+/* ------------ Single-click login ------------ */
+
+interface SingleClickLoginDialogProps {
+    seat: GetSeatsResponseDtoEntry | null
+    onClose: () => void
+    onSuccess?: () => void
+}
+
+function SingleClickLoginDialog(props: SingleClickLoginDialogProps) {
+
+    const [steps, setSteps] = useState<StepProps[]>([
+        {
+            title: '检查登录状态', status: 'wait',
+        },
+        {
+            title: '退出登录', status: 'wait'
+        },
+        {
+            title: '登录 Linux', status: 'wait'
+        },
+        {
+            title: '启动 Vesper', status: 'wait'
+        },
+        {
+            title: '连接到 VNC', status: 'wait'
+        }
+    ])
+
+    const [closable, setClosable] = useState(false)
+    const [seat, setSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
+
+    if (props.seat !== null && props.seat !== seat) {
+        setSeat(props.seat)
+        stepChainCheckLoginStatus()
+    }
+
+    /* steps */
+
+    function stepChainCheckLoginStatus() { // step 0
+        steps[0].status = 'process'
+        setSteps([...steps])
+
+        type LoginStatusResponse = {
+            linux: boolean,
+            vesperLaunch: boolean,
+            vesper: boolean
+        }
+
+        let loginStatus = {
+            linux: false,
+            vesperLaunch: false,
+            vesper: false
+        } as LoginStatusResponse
+
+        let error = false
+
+        request({
+            url: 'seat/loginStatus',
+            params: {
+                seatId: props.seat?.id
+            },
+            vfOpts: {
+                rejectNonOKResults: true, 
+                autoHandleNonOKResults: true, 
+                giveResDataToCaller: true
+            }
+        }).then(untypedRes => {
+            const res = untypedRes as LoginStatusResponse
+            steps[0].status = 'finish'
+            steps[0].description = <Flex vertical>
+                <p>{`linux: ${res.linux ? 'yes' : 'no'}`}</p>
+                <p>{`vesper: ${res.vesper ? 'yes' : 'no'}`}</p>
+                <p>{`vesper-launcher: ${res.linux ? 'yes' : 'no'}`}</p>
+            </Flex>
+            loginStatus = res
+        }).catch(_ => {
+            setClosable(true)
+            steps[0].status = 'error'
+            error = true
+        }).finally(() => {
+            setSteps([...steps])
+
+            if (error) {
+                return
+            }
+
+            if (loginStatus.vesper) {
+                stepChainConnectVNC()
+            } else if (loginStatus.vesperLaunch) {
+                stepChainLaunchVesper()
+            } else if (!loginStatus.linux) {
+                stepChainLoginLinux()
+            } else {
+                stepChainLogout()
+            }
+        })
+    }
+
+    function stepChainLogout() { // step 1
+        steps[1].status = 'process'
+        setSteps([...steps])
+
+        let error = false
+
+        request({
+            url: 'seat/shutdown',
+            method: 'post',
+            data: {
+                seatId: props.seat?.id
+            },
+            vfOpts: {
+                rejectNonOKResults: true, autoHandleNonOKResults: true
+            }
+        }).then(_ => {
+            steps[1].status = 'finish'
+        }).catch(_ => {
+            error = true
+            setClosable(true)
+            steps[1].status = 'error'
+        }).finally(() => {
+            setSteps([...steps])
+
+            if (error) 
+                return
+
+            setTimeout(stepChainLoginLinux, 50);
+        })
+    }
+
+    function stepChainLoginLinux() { // step 2
+        steps[2].status = 'process'
+        setSteps([...steps])
+
+        let error = false
+
+        request({
+            url: 'seat/start',
+            method: 'post',
+            data: {
+                seatId: props.seat?.id
+            },
+            vfOpts: {
+                rejectNonOKResults: true,
+                autoHandleNonOKResults: true
+            }
+        }).then(res => {
+            steps[2].status = 'finish'
+        }).catch(_ => {
+            steps[2].status = 'error'
+            error = true
+            setClosable(true)
+        }).finally(() => {
+            setSteps([...steps])
+
+            if (error) 
+                return
+
+            setTimeout(stepChainLaunchVesper, 1000)
+        })
+
+    }
+
+    function stepChainLaunchVesper() { // step 3
+        steps[3].status = 'process'
+        setSteps([...steps])
+
+        let error = false
+        let successRes = null as any
+
+        request({
+            url: 'seat/launchVesper',
+            method: 'post',
+            data: {
+                seatId: props.seat?.id
+            },
+            vfOpts: {
+                rejectNonOKResults: true, autoHandleNonOKResults: true, giveResDataToCaller: true
+            }
+        }).then(res => {
+            successRes = res
+            steps[3].status = 'finish'
+        }).catch(_ => {
+            error = true
+            steps[3].status = 'error'
+            setClosable(true)
+        }).finally(() => {
+            setSteps([...steps])
+
+            if (error) 
+                return
+
+            stepChainConnectVNC(successRes['vesperIP'], successRes['vesperPort'], successRes['vncPassword'])
+        })
+    }
+
+    function stepChainConnectVNC(
+        vncAddr: string | null = null, 
+        vncPort: string | null = null, 
+        vncPw: string | null = null
+    ) { // step 4, itself comes with latency
+
+        steps[4].status = 'process'
+        setSteps([...steps])
+
+
+        function connect(addr: string, port: string, pw: string) {
+            setClosable(true)
+            globalHooks.app.navigate({
+                pathname: '/vnc-viewer',
+                search: `addr=${addr}&port=${port}&password=${pw}`
+            })
+        }
+
+        if (vncAddr !== null && vncPort !== null && vncPw !== null) {
+            setTimeout(() => connect(vncAddr, vncPort, vncPw), 1000)
+        } else {
+
+            request({
+                url: 'seat/vncConnectionInfo',
+                params: {
+                    seatId: props.seat?.id
+                },
+                vfOpts: {
+                    rejectNonOKResults: true, autoHandleNonOKResults: true,
+                    giveResDataToCaller: true
+                }
+            }).then(res => {
+                steps[4].status = 'finish'
+                let ip = res['vesperIP']
+                if (ip === '0.0.0.0') {
+                    let host = Config.backendRoot
+                    let pos = host.indexOf('//')
+                    if (pos !== -1) {
+                        host = host.substring(pos + 2)
+                    }
+            
+                    pos = host.lastIndexOf(':')
+                    if (pos !== -1) {
+                        host = host.substring(0, pos)
+                    }
+                    ip = host
+                }
+                setTimeout(() => connect(ip, res['vesperPort'], res['vncPassword']), 20)
+            }).catch(_ => {
+                setClosable(true)
+                steps[4].status = 'error'
+            }).finally(() => {
+                setSteps([...steps])
+            })
+        }
+    }
+
+    /* render */
+    return <Drawer
+        open={props.seat !== null}
+        destroyOnClose={true}
+        title={`登录到主机：${props.seat?.nickname}`}
+        onClose={props.onClose}
+        closable={closable}
+        maskClosable={closable}
+    >
+        <Steps
+            direction='vertical'
+            items={steps}
+        />
+    </Drawer>
+}
+
