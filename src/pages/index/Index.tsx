@@ -8,7 +8,6 @@
 import { useState } from "react";
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager";
 import { useConstructor } from "../../utils/react-functional-helpers";
-import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame";
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy";
 import { Link } from "react-router-dom";
 
@@ -42,7 +41,6 @@ export function IndexPage() {
     function constructor() {
 
         data.lyric = Random.randElement(homePageLyrics)
-        loadPageToLayoutFrame(pageEntity)
 
         ensureGlobalData()
             .then(() => {

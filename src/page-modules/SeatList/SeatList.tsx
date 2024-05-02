@@ -13,7 +13,7 @@ import { useConstructor } from '../../utils/react-functional-helpers'
 import { SeatEntity } from '../../api/Entities'
 import { Button, Drawer, Flex, Input, Modal, Popover, Spin, StepProps, Steps, Table, message } from 'antd'
 import { IResponse, VFRequestCtrlOptions, VFRequestParams, request } from '../../utils/request'
-import { DeleteOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PoweroffOutlined } from '@ant-design/icons'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
 import { PageRouteData } from '../../common/PageRoutes/TypeDef'
 import { GroupPermission, Permission } from '../../api/Permissions'
@@ -82,7 +82,6 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             
             if (props.pageEntity) {
                 const pageEntity = props.pageEntity
-                globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
 
                 if (groupMode) {
                     globalHooks.layoutFrame.setTitle(`${pageEntity.title} - ${groupId} 组`)
@@ -248,15 +247,54 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
                 }
 
+
+                // poweroff
                 buttons.push(
                     <Button type='primary' shape='circle' style={buttonStyle}
                         danger
-                        icon={<DeleteOutlined />}
+                        icon={<PoweroffOutlined />}
                         onClick={() => {
-                            setDeleteSeatEntity(record)
+                            request({
+                                url: 'seat/shutdown',
+                                method: 'post',
+                                data: {
+                                    seatId: record.id
+                                },
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true
+                                }
+                            }).then(res => {
+                                globalHooks.app.message.success('操作成功')
+                            }).catch(err => {}).finally(() => {
+                                // do nothing.
+                            })
                         }}
                     />
                 )
+
+
+                if (
+                    globalData.userPermissions.has(Permission.DELETE_ANY_SEAT)
+                    ||
+                    (
+                        record.groupId !== null 
+                        &&
+                        globalData.groupPermissions.has(record.groupId, GroupPermission.CREATE_OR_DELETE_SEAT)
+                    )
+                ) {
+                    // delete seat
+                    buttons.push(
+                        <Button type='primary' shape='circle' style={buttonStyle}
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => {
+                                setDeleteSeatEntity(record)
+                            }}
+                        />
+                    )
+                }
 
                 return <div style={{
                     display: 'flex',
@@ -653,11 +691,32 @@ function SingleClickLoginDialog(props: SingleClickLoginDialogProps) {
         setSteps([...steps])
 
 
+        const realAddr = (addr: string) => {
+            let result = addr
+            if (result === '0.0.0.0') {
+                let host = Config.backendRoot
+                let pos = host.indexOf('//')
+                if (pos !== -1) {
+                    host = host.substring(pos + 2)
+                }
+        
+                pos = host.lastIndexOf(':')
+                if (pos !== -1) {
+                    host = host.substring(0, pos)
+                }
+
+                result = host
+            }
+            
+            return result
+        }
+
+
         function connect(addr: string, port: string, pw: string) {
             setClosable(true)
             globalHooks.app.navigate({
                 pathname: '/vnc-viewer',
-                search: `addr=${addr}&port=${port}&password=${pw}`
+                search: `addr=${realAddr(addr)}&port=${port}&password=${pw}`
             })
         }
 
@@ -676,21 +735,7 @@ function SingleClickLoginDialog(props: SingleClickLoginDialogProps) {
                 }
             }).then(res => {
                 steps[4].status = 'finish'
-                let ip = res['vesperIP']
-                if (ip === '0.0.0.0') {
-                    let host = Config.backendRoot
-                    let pos = host.indexOf('//')
-                    if (pos !== -1) {
-                        host = host.substring(pos + 2)
-                    }
-            
-                    pos = host.lastIndexOf(':')
-                    if (pos !== -1) {
-                        host = host.substring(0, pos)
-                    }
-                    ip = host
-                }
-                setTimeout(() => connect(ip, res['vesperPort'], res['vncPassword']), 20)
+                setTimeout(() => connect(res['vesperIP'], res['vesperPort'], res['vncPassword']), 20)
             }).catch(_ => {
                 setClosable(true)
                 steps[4].status = 'error'

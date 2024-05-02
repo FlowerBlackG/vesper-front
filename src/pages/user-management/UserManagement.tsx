@@ -97,7 +97,6 @@ export default function UserManagementPage() {
 
     function constructor() {
         
-        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
 
         ensureGlobalData().then(() => {
             loadTablePage(1, 10)

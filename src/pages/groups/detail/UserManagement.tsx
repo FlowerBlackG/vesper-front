@@ -7,7 +7,6 @@
 import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Popconfirm, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
 import { ensureGlobalData, globalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
-import { loadPageToLayoutFrame } from "../../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../../utils/react-functional-helpers"
 import { useState } from "react"
 import { IResponse, request } from "../../../utils/request"

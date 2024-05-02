@@ -30,12 +30,6 @@ function preprocessRouteData(route: PageRouteData, pageRouteEntityMap: FreeKeyOb
         route.showBackButton = false
     }
 
-    if (route.inFrame) {
-        route.element = <LayoutFrame>
-            { route.element }
-        </LayoutFrame>
-    }
-
     if (isNullOrUndefined(route.permissionCheckPassed)) {
         route.permissionCheckPassed = () => { return true }
     }

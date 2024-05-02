@@ -9,7 +9,6 @@
 import { useState } from "react"
 import { ensureGlobalData, globalHooks } from "../../common/GlobalData"
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager"
-import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../utils/react-functional-helpers"
 import { Button, FloatButton, Input, Modal, Spin, message } from "antd"
 import FluentUIEmojiProxy from "../../utils/FluentUIEmojiProxy"
@@ -63,7 +62,6 @@ export default function LoginPage() {
     function constructor() {
         data.password = ''
         data.uname = ''
-        loadPageToLayoutFrame(pageEntity)
         checkVesperSystemInitialized()
     }
 

@@ -45,9 +45,7 @@ export function UpdateLogPage() {
 
     useConstructor(constructor)
     function constructor() {
-        globalHooks.layoutFrame.loadPageEntity(
-            PageRouteManager.getRouteEntity('/update-log')
-        )
+        
 
         ensureGlobalData({dontReject: true, dontResolve: true})
         loadData()

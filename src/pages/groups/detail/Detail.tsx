@@ -53,8 +53,6 @@ export default function DetailPage() {
 
         ensureGlobalData({ resolveLater: true, dontReject: true }).then(res => {
 
-            globalHooks.layoutFrame.loadPageEntity(pageEntity)
-
             if (!searchParams.has('groupId')) {
                 message.warning('groupId required')
                 globalHooks.app.navigate!({ pathname: '/groups' })

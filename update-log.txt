@@ -1,3 +1,21 @@
+
+version  tag  : 1.0.1
+version  code : 5
+complete time : 2024-05-02T18:50+08:00
+update   log  :
+
+Bugfix:
+* Fix the issue of failed to determine the real VNC address when using single-click login.
+* Hide the button to remove seat when user doesn't have permissions.
+
+Improvement:
+* You can now use VNC Viewer in fullpage mode.
+* You can now poweroff a seat right on the Seat List.
+* The default resolution of Vesper's virtual display has been increased to 1440*900.
+* Overall performance has been Improved.
+
+--------------------------------
+
 version  tag  : 1.0.0
 version  code : 4
 complete time : 2024-04-28T16:21+08:00

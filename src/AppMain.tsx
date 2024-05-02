@@ -16,12 +16,14 @@ import { GlobalNavigate } from './components/GlobalNavigate'
 import AntdMessageHost from './components/AntdMessageHost'
 import { request } from './utils/request'
 import { Button } from 'antd'
+import Config from './common/Config'
+import LayoutFrame from './components/LayoutFrame/LayoutFrame'
 
 export default function AppMain() {
 
     useConstructor(constructor)
     function constructor() {
-        axios.defaults.baseURL = MacroDefines.BACKEND_ROOT
+        axios.defaults.baseURL = Config.backendRoot
         axios.defaults.withCredentials = false
     }
 
@@ -38,7 +40,7 @@ export default function AppMain() {
                 PageRouteManager.getRoutes().map((route) => {
                     return <Route
                         path={ route.path }
-                        element={ route.element }
+                        element={ <LayoutFrame child={route} /> }
                         key={ "appmain-route-".concat(route.path) }
                     />
                 })

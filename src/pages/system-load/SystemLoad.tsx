@@ -9,7 +9,6 @@
 import { Card, Progress, ProgressProps } from "antd"
 import { ensureGlobalData, globalHooks } from "../../common/GlobalData"
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager"
-import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../utils/react-functional-helpers"
 import { request } from "../../utils/request"
 import { useEffect, useState } from "react"
@@ -45,7 +44,7 @@ export default function SystemLoadPage() {
 
     useConstructor(constructor)
     function constructor() {
-        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
+        
         ensureGlobalData().then(() => {
             data.pageActive = true
             fetchData()

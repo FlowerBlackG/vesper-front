@@ -12,18 +12,23 @@ import { request } from '../../utils/request';
 import MacroDefines from '../../common/MacroDefines';
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
-import { Button, Flex, Menu, Spin, Tooltip, Typography, message } from 'antd';
-import { ArrowLeftOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Button, Flex, FloatButton, Menu, Spin, Tooltip, Typography, message } from 'antd';
+import { ArrowLeftOutlined, FullscreenExitOutlined, LogoutOutlined } from '@ant-design/icons';
 import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
 import { later } from '../../utils/later';
+import { Permission } from '../../api/Permissions';
 
 
 const { Text, Title, Paragraph } = Typography
 
 
+export interface LayoutFrameProps {
+    child: PageRouteData
+}
+
+
 export default function LayoutFrame(
-    props: React.PropsWithChildren,
-    ref: ForwardedRef<any>
+    props: LayoutFrameProps
 ) {
 
 
@@ -32,23 +37,28 @@ export default function LayoutFrame(
     const [showBackBtn, setShowBackBtn] = useState(false)
     const [pageTitle, setPageTitle] = useState('')
     const [pageDataLoading, setPageDataLoading] = useState(false)
-    const [menuSelectedKey, setMenuSelectedKey] = useState('')
-    const [pageIcon, setPageIcon] = useState('')
-    const [menuItems, setMenuItems] = useState<any[]>([])
+    const [pageEntity, setPageEntity] = useState<PageRouteData | null>(null)
+    const [username, setUsername] = useState('')
+    const [userPermissions, setUserPermissions] = useState<Permission[]>([])
+
+    const [fullpage, setFullpage] = useState(false)
 
     /* constructor */
 
-    useConstructor(constructor)
-    function constructor() {
+    if (pageEntity !== props.child) {
+        setPageEntity(props.child)
+        constructor()
+    }
 
+    function constructor() {
         const hooks = globalHooksRegistry.layoutFrame
         hooks.setDataLoading = setDataLoading
-        hooks.setCurrentPageEntity = setCurrentPageEntity
         hooks.setTitle = setTitle
         hooks.forceUpdate = update
-        
+        hooks.setUsername = setUsername
+        hooks.setFullpage = setFullpage
 
-        loadMenu()
+        setCurrentPageEntity(props.child)
     }
 
 
@@ -56,7 +66,7 @@ export default function LayoutFrame(
      * 强制刷新组件。
      */
     function update() {
-        loadMenu()
+        setUserPermissions(globalData.userPermissions.list())
     }
 
     function setTitle(title: string) {
@@ -66,13 +76,6 @@ export default function LayoutFrame(
     function setCurrentPageEntity(entity: PageRouteData) {
 
         setTitle(entity.title!)
-        setMenuSelectedKey(entity.path)
-
-        let pageIcon = entity.icon
-        if (pageIcon === undefined) {
-            pageIcon = ''
-        }
-        setPageIcon(pageIcon)
 
         setPageDataLoading(false)
 
@@ -84,6 +87,120 @@ export default function LayoutFrame(
 
     function setDataLoading(loading: boolean) {
         setPageDataLoading(loading)
+    }
+
+
+    /* render */
+
+    if (props.child.inFrame === false) {
+        return <>{ props.child.element }</>
+    }
+
+
+    return <Flex style={{
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+    }}>
+
+        { /* 侧边栏区域。 */ }
+
+        {
+            !fullpage &&
+
+            <FrameSidebar 
+                pageEntity={pageEntity} 
+                username={username} 
+                userPermissions={userPermissions} 
+            />
+        }
+
+        
+
+        { /* 右区域。 */ }
+
+        <div style={{ 
+            flex: 1,
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
+            { /* 标题区域。 */ }
+            {
+                !fullpage &&
+
+                <FrameToolbar 
+                    pageTitle={pageTitle} 
+                    pageDataLoading={pageDataLoading} 
+                    showBackBtn={showBackBtn} 
+                />
+            }
+            
+
+            { /* 页面主元素区域。 */ }
+
+            <div 
+                style={{
+                    flex: 1,
+                    position: 'relative',
+                    marginTop: 2,
+                    marginLeft: 2,
+                    borderTopLeftRadius: 8,
+                    border: 'solid 1px #aaa2',
+                }} 
+                className={styles.MainElementShadow}
+            >
+                { props.child.element }
+            </div>
+
+            {
+                fullpage &&
+                <FloatButton
+                    shape='circle'
+                    icon={<FullscreenExitOutlined />}
+                    onClick={() => setFullpage(false)}
+                />
+            }
+            
+        </div>
+
+    </Flex>
+
+}  // export default function LayoutFrame
+
+
+
+interface FrameSidebarProps {
+    pageEntity: PageRouteData | null
+    username: string
+    userPermissions: Permission[]
+}
+
+
+function FrameSidebar(props: FrameSidebarProps) {
+
+
+    const [menuItems, setMenuItems] = useState<any[]>([])
+    const [pageIcon, setPageIcon] = useState('')
+    const [userPermissions, setUserPermissions] = useState<Permission[]>([])
+
+    useConstructor(constructor)
+    function constructor() {
+
+        let icon = props.pageEntity?.icon
+        if (icon === undefined) {
+            icon = ''
+        }
+        setPageIcon(icon)
+    }
+
+
+    if (props.userPermissions !== userPermissions) {
+        setUserPermissions(props.userPermissions)
+        loadMenu()
     }
 
 
@@ -152,224 +269,166 @@ export default function LayoutFrame(
         })
 
         setMenuItems(items)
-        
     }
 
-    const navigate = useNavigate()
 
-    function sidebar(): React.ReactNode {
+    if (props.pageEntity === null) {
+        return null
+    }
 
-        return <div style={{
-            width: 120,
+
+    return <div style={{
+        width: 120,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        flexShrink: 0,
+    }}>
+        
+        { /* 个人信息。 */ }
+        <div style={{
+            height: 48,
+            width: '100%',
+            fontSize: 18,
             display: 'flex',
-            flexDirection: 'column',
-            position: 'relative',
-            flexShrink: 0,
-        }}>
-            
-            { /* 个人信息。 */ }
-            <div style={{
-                height: 48,
-                width: '100%',
-                fontSize: 18,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                userSelect: 'none',
-            }}>
-
-                <img
-                    src={ pageIcon }
-                    style={{
-                        width: '1.2em',
-                        flexShrink: '0',
-                        marginLeft: '0.4em'
-                    }}
-                />
-
-                <div style={{ 
-                    width: '0.4em',
-                    flexShrink: '0'
-                }} />
-
-                <Tooltip title={globalData.userEntity?.username}>
-                    <div 
-                        style={{ 
-                            flexShrink: '0',
-                            flexGrow: 1,
-                            width: 0,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            marginRight: '0.4em'
-                        }}
-                    >
-                        { globalData.userEntity?.username }
-                    </div>
-                </Tooltip>
-            </div>
-        
-            { /* 导航项。 */ }
-
-            <div 
-                style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    userSelect: 'none',
-                    overflowX: 'hidden'
-                }}
-
-                className='overflow-y-overlay nicer-scrollbar'
-            >
-
-                <Menu 
-                    items={ menuItems }
-                    style={{
-                        borderRight: 'solid 0px #0000'
-                    }}
-                    onSelect={(event) => {
-
-                        let entity = PageRouteManager.getRouteEntity(event.key)
-                        
-                        navigate({ pathname: entity.path })
-                    }}
-
-                    mode='inline'
-                    selectedKeys={[ menuSelectedKey ]}
-                />
-   
-
-            </div>
-
-        </div>
-    }
-
-    function toolbar(): React.ReactNode {
-        return <Flex style={{
-            height: 42,
             alignItems: 'center',
-            color: '#000b',
-            fontSize: 20,
-            paddingLeft: 18,
-            flexShrink: 0,
+            justifyContent: 'center',
+            userSelect: 'none',
         }}>
 
-            { /* 返回按钮 */ }
-            {
-                showBackBtn &&
-                <Button
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'absolute',
-                    }}
-                    shape='round'
-                    icon={<ArrowLeftOutlined />}
-                    onClick={ () => { navigate( -1 ) } }
-                />
-            }
-
-            <div style={{ width: '100%', textAlign: 'center' }}>
-                { pageTitle }
-            </div>
-
-            <Spin 
-                spinning={ pageDataLoading }
+            <img
+                src={ pageIcon }
                 style={{
-                    marginLeft: 10,
+                    width: '1.2em',
+                    flexShrink: '0',
+                    marginLeft: '0.4em'
                 }}
-                size='small'
             />
 
-            { /* 退出登录。 */ } 
-            <Tooltip title='退出登录'><Button 
-                style={{
-                    marginRight: 8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-                shape='round'
-                icon={<LogoutOutlined />}
-                onClick={() => {
-                    request({
-                        url: 'user/logout'
-                    }).catch(err => {
+            <div style={{ 
+                width: '0.4em',
+                flexShrink: '0'
+            }} />
 
-                    }).finally(() => {
-                        resetGlobalData()
-                        navigate({ pathname: '/login' })
-                    })
-                }}
-            /></Tooltip>
-             
-        </Flex>
-    }
+            <Tooltip title={props.username}>
+                <div 
+                    style={{ 
+                        flexShrink: '0',
+                        flexGrow: 1,
+                        width: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginRight: '0.4em'
+                    }}
+                >
+                    { props.username }
+                </div>
+            </Tooltip>
+        </div>
+    
+        { /* 导航项。 */ }
 
-
-    /* 渲染。 */
-
-    return <Flex style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-    }}>
-
-        { /* 侧边栏区域。 */ }
-        { sidebar() }
-
-        { /* 右区域。 */ }
-
-        <div style={{ 
-            flex: 1,
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column'
-        }}>
-            { /* 标题区域。 */ }
-            { toolbar() }
-
-            { /* 页面主元素区域。 */ }
-
-            <div style={{
+        <div 
+            style={{
                 flex: 1,
-                position: 'relative',
-                marginTop: 2,
-                marginLeft: 2,
-                borderTopLeftRadius: 8,
-                border: 'solid 1px #aaa2',
-            }} className={styles.MainElementShadow}>
-                { props.children }
-            </div>
-            
+                display: 'flex',
+                flexDirection: 'column',
+                userSelect: 'none',
+                overflowX: 'hidden'
+            }}
+
+            className='overflow-y-overlay nicer-scrollbar'
+        >
+
+            <Menu 
+                items={ menuItems }
+                style={{
+                    borderRight: 'solid 0px #0000'
+                }}
+                onSelect={(event) => {
+
+                    const entity = PageRouteManager.getRouteEntity(event.key)
+                    
+                    globalHooks.app.navigate({ pathname: entity.path })
+                }}
+
+                mode='inline'
+                selectedKeys={[ props.pageEntity.path ]}
+            />
+
+
         </div>
 
-        { /* 页面跳转。 */ }
+    </div>
+}
 
+
+interface FrameToolbarProps {
+    showBackBtn: boolean
+    pageTitle: string
+    pageDataLoading: boolean
+}
+
+function FrameToolbar(props: FrameToolbarProps) {
+    return <Flex style={{
+        height: 42,
+        alignItems: 'center',
+        color: '#000b',
+        fontSize: 20,
+        paddingLeft: 18,
+        flexShrink: 0,
+    }}>
+
+        { /* 返回按钮 */ }
+        {
+            props.showBackBtn &&
+            <Button
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                }}
+                shape='round'
+                icon={<ArrowLeftOutlined />}
+                onClick={ () => { globalHooks.app.navigate( -1 ) } }
+            />
+        }
+
+        <div style={{ width: '100%', textAlign: 'center' }}>
+            { props.pageTitle }
+        </div>
+
+        <Spin 
+            spinning={ props.pageDataLoading }
+            style={{
+                marginLeft: 10,
+            }}
+            size='small'
+        />
+
+        { /* 退出登录。 */ } 
+        <Tooltip title='退出登录'><Button 
+            style={{
+                marginRight: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}
+            shape='round'
+            icon={<LogoutOutlined />}
+            onClick={() => {
+                request({
+                    url: 'user/logout'
+                }).catch(err => {
+
+                }).finally(() => {
+                    resetGlobalData()
+                    globalHooks.app.navigate({ pathname: '/login' })
+                })
+            }}
+        /></Tooltip>
+         
     </Flex>
-
 }
-
-
-/**
- * 
- * @deprecated use globalHooks.layoutFrame.setCurrentPageEntity instead.
- */
-export function loadPageToLayoutFrame(entity: PageRouteData) {
-    globalHooks.layoutFrame.setCurrentPageEntity(entity)
-}
-
-
-/**
- * 
- * @deprecated use globalHooks.layoutFrame.setTitle instead
- */
-export function setLayoutFrameTitle(title: string) {
-    globalHooks.layoutFrame.setTitle(title)
-}
-

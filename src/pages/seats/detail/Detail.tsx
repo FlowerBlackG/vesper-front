@@ -7,7 +7,6 @@
 import React, { useEffect, useState } from "react"
 import { ensureGlobalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
-import { loadPageToLayoutFrame } from "../../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../../utils/react-functional-helpers"
 import { SeatEntity } from "../../../api/Entities"
 import { request } from "../../../utils/request"
@@ -58,13 +57,12 @@ export default function DetailPage() {
     const [vncConnInfoRefreshing, setVncConnInfoRefreshing] = useState(false)
 
 
-    const [launchVesperDisplayWidth, setLaunchVesperDisplayWidth] = useState(1280)
-    const [launchVesperDisplayHeight, setLaunchVesperDisplayHeight] = useState(720)
+    const [launchVesperDisplayWidth, setLaunchVesperDisplayWidth] = useState(1440)
+    const [launchVesperDisplayHeight, setLaunchVesperDisplayHeight] = useState(900)
 
     /* ctor */
     function constructor() {
         ensureGlobalData({dontReject: true, resolveLater: true}).then(() => {
-            loadPageToLayoutFrame(pageEntity)
 
             data.pageActive = true
 

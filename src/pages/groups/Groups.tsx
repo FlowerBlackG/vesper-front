@@ -53,7 +53,6 @@ export default function GroupsPage() {
     useConstructor(constructor)
     function constructor() {
         
-        globalHooks.layoutFrame.setCurrentPageEntity(pageEntity)
         ensureGlobalData().then(() => {
             fetchData()
         

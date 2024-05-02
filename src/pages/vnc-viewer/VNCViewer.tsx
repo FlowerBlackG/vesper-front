@@ -12,7 +12,7 @@ import { ensureGlobalData, globalHooks } from "../../common/GlobalData";
 import { useSearchParams } from "react-router-dom";
 import { later } from "../../utils/later";
 import { useState } from "react";
-import { Skeleton } from "antd";
+import { FloatButton, Skeleton } from "antd";
 
 
 
@@ -32,7 +32,8 @@ export default function VNCViewerPage() {
     useConstructor(constructor)
     function constructor() {
         ensureGlobalData({ dontReject: true, dontResolve: true })
-        globalHooks.layoutFrame.loadPageEntity(pageEntity)
+
+        globalHooks.layoutFrame.setFullpage(true)  // todo: change it to switchable mode 
 
         later(() => {
             if (searchParams.has('addr')) {

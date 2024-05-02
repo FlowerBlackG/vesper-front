@@ -6,7 +6,6 @@
 
 import { Card, Drawer, Flex, Image, Modal } from "antd"
 import PageRouteManager from "../../common/PageRoutes/PageRouteManager"
-import { loadPageToLayoutFrame } from "../../components/LayoutFrame/LayoutFrame"
 import { useConstructor } from "../../utils/react-functional-helpers"
 import { LoginPageBackgroundManager } from "../login/LoginPageBackgrounds"
 
@@ -27,7 +26,6 @@ export default function LoginPageBackgroundGalleryPage() {
 
     useConstructor(constructor)
     function constructor() {
-        loadPageToLayoutFrame(pageEntity)
         ensureGlobalData({dontReject: true, dontResolve: true})
     }
 

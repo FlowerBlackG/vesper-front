@@ -13,7 +13,6 @@ import { useConstructor } from '../../utils/react-functional-helpers'
 import { Avatar, Button, Modal, Spin, Typography } from 'antd'
 import { UserEntity } from '../../api/Entities'
 import { ensureGlobalData, globalData } from '../../common/GlobalData'
-import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame'
 import DateTimeUtils from '../../utils/DateTimeUtils'
 
 const { Text } = Typography
@@ -35,7 +34,6 @@ export default function MyProfilePage() {
 
 
     function constructor() {
-        loadPageToLayoutFrame(pageEntity)
         ensureGlobalData().then(() => {
             state.userInfo = globalData.userEntity
             setState({...state})

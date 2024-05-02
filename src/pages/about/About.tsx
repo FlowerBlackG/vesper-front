@@ -12,7 +12,6 @@ import styles from './About.module.css'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
 import { message } from 'antd';
-import { loadPageToLayoutFrame } from '../../components/LayoutFrame/LayoutFrame';
 import FluentUIEmojiProxy from '../../utils/FluentUIEmojiProxy';
 import Config from '../../common/Config';
 
@@ -40,8 +39,6 @@ export function AboutPage() {
 
     useConstructor(constructor)
     function constructor() {
-
-        globalHooks.layoutFrame.loadPageEntity(pageEntity)
 
         ensureGlobalData({dontReject: true, dontResolve: true})
 

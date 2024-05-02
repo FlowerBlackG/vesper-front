@@ -36,7 +36,9 @@ export const globalHooksRegistry = {
         setDataLoading: null as ((loading: boolean) => void) | null,
         setCurrentPageEntity: null as ((e: PageRouteData) => void) | null,
         setTitle: null as ((s: string) => void) | null,
-        forceUpdate: null as (() => void) | null
+        forceUpdate: null as (() => void) | null,
+        setUsername: null as ((s: string) => void) | null,
+        setFullpage: null as ((b: boolean) => void) | null,
     }
 }
 
@@ -63,10 +65,6 @@ export const globalHooks = {
             }
         },
 
-        loadPageEntity: (entity: PageRouteData) => {
-            globalHooks.layoutFrame.setCurrentPageEntity(entity)
-        },
-
         setTitle: (title: string) => {
             const f = globalHooksRegistry.layoutFrame.setTitle
             if (f) {
@@ -79,7 +77,21 @@ export const globalHooks = {
             if (f) {
                 f()
             }
-        }
+        },
+
+        setUsername: (s: string) => {
+            const f = globalHooksRegistry.layoutFrame.setUsername
+            if (f) {
+                f(s)
+            }
+        },
+
+        setFullpage: (b: boolean) => {
+            const f = globalHooksRegistry.layoutFrame.setFullpage
+            if (f) {
+                f(b)
+            }
+        },
     }
 }
 
@@ -245,7 +257,7 @@ function loadBasicInfo() {
             if (res.code === HttpStatusCode.OK) {
     
                 globalData.userEntity = res.data
-                globalHooks.layoutFrame.forceUpdate()
+                globalHooks.layoutFrame.setUsername(globalData.userEntity!.username)
                 resolve(null)
             } else {
                 message.warning(res.code + res.msg)

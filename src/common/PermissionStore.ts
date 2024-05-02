@@ -86,6 +86,12 @@ export class PermissionStore {
 
     ready = false
 
+    list(): Permission[] {
+        const res = [] as Permission[]
+        this.store.forEach(it => res.push(it))
+        return res
+    }
+
     private store = new Set<Permission>()
 }
 
