@@ -33,7 +33,7 @@ export default function VNCViewerPage() {
     function constructor() {
         ensureGlobalData({ dontReject: true, dontResolve: true })
 
-        globalHooks.layoutFrame.setFullpage(true)  // todo: change it to switchable mode 
+        globalHooks.layoutFrame.setFullpage(true)
 
         later(() => {
             if (searchParams.has('addr')) {

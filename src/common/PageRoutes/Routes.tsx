@@ -217,6 +217,7 @@ export default class PageRoutes {
             showInSidebar: false,
             showInHomePage: false,
             showBackButton: true,
+            allowFullpage: true,
         },
 
 

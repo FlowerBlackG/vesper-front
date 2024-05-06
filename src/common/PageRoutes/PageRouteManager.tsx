@@ -42,6 +42,10 @@ function preprocessRouteData(route: PageRouteData, pageRouteEntityMap: FreeKeyOb
         route.showInHomePage = true
     }
 
+    if (isNullOrUndefined(route.allowFullpage)) {
+        route.allowFullpage = false
+    }
+
     pageRouteEntityMap[route.path] = route
 }
 

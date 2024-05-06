@@ -51,6 +51,8 @@ export interface PageRouteData {
 
     showInHomePage?: boolean
 
+    allowFullpage?: boolean
+
     permissionCheckPassed?: () => boolean
 }
 

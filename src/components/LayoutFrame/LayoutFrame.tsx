@@ -13,7 +13,7 @@ import MacroDefines from '../../common/MacroDefines';
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager';
 import { useConstructor } from '../../utils/react-functional-helpers';
 import { Button, Flex, FloatButton, Menu, Spin, Tooltip, Typography, message } from 'antd';
-import { ArrowLeftOutlined, FullscreenExitOutlined, LogoutOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, FullscreenExitOutlined, FullscreenOutlined, LogoutOutlined } from '@ant-design/icons';
 import { PageRouteCategory, PageRouteData } from '../../common/PageRoutes/TypeDef';
 import { later } from '../../utils/later';
 import { Permission } from '../../api/Permissions';
@@ -47,6 +47,7 @@ export default function LayoutFrame(
 
     if (pageEntity !== props.child) {
         setPageEntity(props.child)
+        setFullpage(false)
         constructor()
     }
 
@@ -164,6 +165,15 @@ export default function LayoutFrame(
                     onClick={() => setFullpage(false)}
                 />
             }
+
+            {
+                pageEntity?.allowFullpage && !fullpage && 
+                <FloatButton
+                    shape='circle'
+                    icon={<FullscreenOutlined />}
+                    onClick={() => setFullpage(true)}
+                />
+            }
             
         </div>
 
@@ -172,12 +182,14 @@ export default function LayoutFrame(
 }  // export default function LayoutFrame
 
 
+/* ------------ Frame Sidebar ------------ */
 
 interface FrameSidebarProps {
     pageEntity: PageRouteData | null
     username: string
     userPermissions: Permission[]
 }
+
 
 
 function FrameSidebar(props: FrameSidebarProps) {
@@ -363,6 +375,9 @@ function FrameSidebar(props: FrameSidebarProps) {
     </div>
 }
 
+
+
+/* ------------ Frame Toolbar ------------ */
 
 interface FrameToolbarProps {
     showBackBtn: boolean

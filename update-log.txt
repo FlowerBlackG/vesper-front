@@ -1,4 +1,15 @@
 
+version  tag  : 1.1.0
+version  code : 6
+complete time : 2024-05-06T11:16+08:00
+update   log  :
+
+Improvement:
+* Fullpage mode comes more stable.
+* You can now active fullpage mode by yourself for select pages.
+
+--------------------------------
+
 version  tag  : 1.0.1
 version  code : 5
 complete time : 2024-05-02T18:50+08:00
