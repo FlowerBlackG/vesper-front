@@ -123,6 +123,17 @@ export default function LoginPageBackgroundGalleryPage() {
                     marginLeft: 16
                 }}/>
             </Flex>
+
+            <p>
+                拍摄于 { imageDrawerData.location }
+            </p>
+            <p>
+                由 { imageDrawerData.photographer } 拍摄
+            </p>
+
+            <p>
+                { imageDrawerData.description }
+            </p>
         </Drawer>
 
     </Flex>

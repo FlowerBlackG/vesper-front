@@ -10,10 +10,11 @@ import { useState } from 'react'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import styles from './MyInfo.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { Avatar, Button, Modal, Spin, Typography } from 'antd'
+import { Avatar, Button, Input, Modal, Spin, Typography } from 'antd'
 import { UserEntity } from '../../api/Entities'
-import { ensureGlobalData, globalData } from '../../common/GlobalData'
+import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import DateTimeUtils from '../../utils/DateTimeUtils'
+import { request } from '../../utils/request'
 
 const { Text } = Typography
 
@@ -49,18 +50,6 @@ export default function MyProfilePage() {
         const commonMargin = <div style={{ height: 12 }} />
         const commonWidth = 200
 
-        function changePwModal() {
-            return <Modal
-                destroyOnClose={true}
-                title="修改密码"
-                open={changePwDialogOpen}
-                centered={true}
-                onCancel={() => setChangePwDialogOpen(false)}
-            >
-                暂不可用。
-            </Modal>
-        }
-
         return <div
             style={{
                 width: '100%',
@@ -78,7 +67,12 @@ export default function MyProfilePage() {
             >
                 修改密码
             </Button>
-            { changePwModal() }
+
+            <ChangePWDialog
+                open={changePwDialogOpen}
+                onClose={() => setChangePwDialogOpen(false)}
+            />
+
         </div>
     
     }
@@ -154,3 +148,92 @@ export default function MyProfilePage() {
         { settings() }
     </div>
 }
+
+
+
+/* ------------ ChangePWDialog ------------ */
+
+interface ChangePWDialogProps {
+    onClose: () => void
+    open: boolean
+}
+
+function ChangePWDialog(props: ChangePWDialogProps) {
+
+
+    const [confirmLoading, setConfirmLoading] = useState(false)
+    const [username, setUsername] = useState("")
+    const [oldPw, setOldPw] = useState("")
+    const [newPw, setNewPw] = useState("")
+    const [newPwConfirm, setNewPwConfirm] = useState("")
+
+    return <Modal
+        destroyOnClose={true}
+        title="修改密码"
+        open={props.open}
+        centered={true}
+        onCancel={props.onClose}
+        confirmLoading={confirmLoading}
+        onOk={() => {
+            if (newPw !== newPwConfirm) {
+                globalHooks.app.message.error("两次输入的新密码不一致")
+                return
+            }
+
+            setConfirmLoading(true)
+
+            request({
+                url: 'user/changePassword',
+                method: 'post',
+                vfOpts: {
+                    rejectNonOKResults: true,
+                    autoHandleNonOKResults: true,
+                    giveResDataToCaller: true
+                },
+                data: {
+                    oldPw: oldPw,
+                    newPw: newPw
+                }
+            }).then(res => {
+
+                globalHooks.app.message.success("修改成功")
+                props.onClose()
+            }).catch(err => {
+
+            }).finally(() => {
+                setConfirmLoading(false)
+            })
+            
+        }}
+    >
+        <p>修改密码</p>
+
+
+        <Input.Password
+            placeholder='旧密码'
+            onChange={(event) => {
+                setOldPw(event.target.value)
+            }}
+        />
+
+        <Input.Password
+            placeholder='新密码'
+            style={{ marginTop: 16 }}
+            onChange={(event) => {
+                setNewPw(event.target.value)
+            }}
+        />
+
+
+        <Input.Password
+            placeholder='再输入一遍新密码'
+            style={{ marginTop: 16 }}
+            onChange={(event) => {
+                setNewPwConfirm(event.target.value)
+            }}
+            status={ newPwConfirm === newPw ? '' : 'error' }
+        />
+
+    </Modal>
+}
+

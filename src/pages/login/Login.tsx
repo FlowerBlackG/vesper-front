@@ -220,7 +220,7 @@ export default function LoginPage() {
 
             display: 'flex',
             flexDirection: 'column',
-
+            
             paddingTop: '4rem',
             paddingBottom: '4rem',
             paddingLeft: '2rem',
@@ -228,11 +228,11 @@ export default function LoginPage() {
 
             width: '20rem',
 
-            background: '#6664',
+            background: '#aaa4',
             borderRadius: 24,
-            boxShadow: '0px 6px 24px #0008',
+            boxShadow: '0px 6px 24px #4448',
 
-            backdropFilter: 'blur(8px)'
+            backdropFilter: 'blur(6px)'
         }}>
 
             <div style={{
@@ -350,8 +350,18 @@ export default function LoginPage() {
             borderRadius: 12,
             padding: 4,
         }}>
-            { Version.tag } ({Version.code}) {Version.buildTime}
-            
+            Vesper Front: { Version.tag } ({Version.code}) {Version.buildTime}
+            <br/>
+            {
+                "封面图：《"
+                    .concat(LoginPageBackgroundManager.instance.background.title)
+                    .concat("》")
+                    .concat("by ")
+                    .concat(LoginPageBackgroundManager.instance.background.photographer)
+                    .concat(" ")
+                    .concat(LoginPageBackgroundManager.instance.background.location)
+                    
+            }
         </div>
 
         { /* 后端地址配置按钮 */ }

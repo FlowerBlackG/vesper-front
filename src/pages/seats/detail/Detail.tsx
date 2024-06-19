@@ -333,7 +333,7 @@ export default function DetailPage() {
 
                 <Descriptions.Item
                     label='linux 登录密码'
-                    children='不告诉你 🤣'
+                    children={seatEntity?.linuxPasswdRaw}
                 />
 
                 <Descriptions.Item

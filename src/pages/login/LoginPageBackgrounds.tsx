@@ -40,6 +40,9 @@ const buttonStyleShared = {
 interface LoginPageBackgroundEntry {
     title: string
     url: string
+    photographer: string
+    location: string
+    description: string
     colors: {
         button: {
             normal: string
@@ -60,9 +63,12 @@ interface LoginPageBackgroundEntry {
 export class LoginPageBackgroundManager {
 
     private entries : LoginPageBackgroundEntry[] = [
-        {
+        {  // idx: 0
             title: '嘉定校区鸟瞰',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231208_123408.1.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区图书馆14层',
+            description: '',
             colors: {
                 button: {
                     normal: '#2486b9',
@@ -75,6 +81,9 @@ export class LoginPageBackgroundManager {
         {
             title: '肖四',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231211_125623.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区安楼',
+            description: '',
             colors: {
                 button: {
                     normal: '#e8b004',
@@ -87,6 +96,9 @@ export class LoginPageBackgroundManager {
         {
             title: '嘉定校区图书馆',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区蝴蝶桥',
+            description: '',
             colors: {
                 button: {
                     normal: '#4f4032',
@@ -99,6 +111,9 @@ export class LoginPageBackgroundManager {
         {
             title: '水杉',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210412_092042.webp',
+            photographer: '2051565GTY',
+            location: '同济大学四平路校区中央大道',
+            description: '',
             colors: {
                 button: {
                     normal: '#41ae3c',
@@ -111,6 +126,9 @@ export class LoginPageBackgroundManager {
         {
             title: '樱花冰糖',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_183307.webp',
+            photographer: '2051565GTY',
+            location: '同济大学四平路校区樱花大道',
+            description: '',
             colors: {
                 button: {
                     normal: '#2f2f35',
@@ -120,9 +138,73 @@ export class LoginPageBackgroundManager {
             }
         },
 
+        {  // idx: 5
+            title: '耶！',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20240329_144332.webp',
+            photographer: '2051565GTY',
+            location: '同济大学设计创意学院深海探索馆',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#ee3f4d',
+                    boxShadow: '',
+                    hover: '#ed556a'
+                }
+            }
+        },
+
+
         {
+            title: '瑞安楼',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20240402_124000.webp',
+            photographer: '2051565GTY',
+            location: '同济大学四平路校区赤峰路门',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#f07c82',
+                    boxShadow: '',
+                    hover: '#f1939c'
+                }
+            }
+        },
+
+        {  // idx: 7
+            title: '快逃！',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20240530_110742.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区校前区',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#ee3f4d',
+                    boxShadow: '',
+                    hover: '#ed556a'
+                }
+            }
+        },
+
+        {
+            title: '快逃！',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/P1230254.webp',
+            photographer: '2054011WYX',
+            location: '同济大学嘉定校区校前区',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#ee3f4d',
+                    boxShadow: '',
+                    hover: '#ed556a'
+                }
+            }
+        },
+
+        {  // idx: 9
             title: '樱花猫猫',
             url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20210326_180029.webp',
+            photographer: '2051565GTY',
+            location: '同济大学四平路校区樱花大道',
+            description: '',
             colors: {
                 button: {
                     normal: '#f07c82',

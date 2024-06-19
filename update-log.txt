@@ -1,4 +1,22 @@
 
+version  tag  : next-20240619
+version  code : 7
+complete time : 2024-06-19T20:38+08:00
+update   log  :
+
+Login Page:
+  1. New background photos introduced.
+  2. Background photo's introduction added to footnote.
+  3. Appearance of the login card updated.
+
+My Profile Page:
+  You can now change your login password.
+
+Seat Detail Page:
+  Seats' linux login password is now displayed.
+
+--------------------------------
+
 version  tag  : 1.1.0
 version  code : 6
 complete time : 2024-05-06T11:16+08:00
