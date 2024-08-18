@@ -17,6 +17,7 @@ import DateTimeUtils from "../../../utils/DateTimeUtils"
 import { DesktopOutlined, LinkOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
 import axios, { Axios } from "axios"
 import Config from "../../../common/Config"
+import { LightIndicator } from "../../../components/LightIndicator"
 
 
 
@@ -209,39 +210,17 @@ export default function DetailPage() {
 
 
     function systemStatusIndicators(inTable: boolean) {
-        const indicatorColor = {
-            unknown: '#777',
-            on: '#7f7',
-            off: '#f77'
-        }
 
-        const indicatorSize = 16
-        const indicatorStyleShared = {
-            width: indicatorSize,
-            height: indicatorSize,
-            borderRadius: '100%',
-            marginRight: 16,
-            transition: '0.4s'
-        } as React.CSSProperties
-
-        const indicatorStyle = {
-            unknown: {
-                ...indicatorStyleShared,
-                background: '#474b4c',
-                boxShadow: '0 0 12px 2px #474b4c40'
-            } as React.CSSProperties,
-            
-            on: {
-                ...indicatorStyleShared,
-                background: '#43b244',
-                boxShadow: '0 0 12px 2px #43b24440'
-            } as React.CSSProperties,
-
-            off: {
-                ...indicatorStyleShared,
-                background: '#ee3f4d',
-                boxShadow: '0 0 12px 2px #ee3f4d40'
-            } as React.CSSProperties
+        const statusToColor = (status: VesperStatus) => {
+            if (status === 'on') {
+                return 'green'
+            } else if (status === 'off') {
+                return 'red'
+            } else if (status === 'unknown') {
+                return 'grey'
+            } else {
+                globalHooks.app.message.error("internal error! (9c2139ab-a693-4a01-92a3-50a861b74e8e)")
+            }
         }
 
         const tableStyle = {} as React.CSSProperties
@@ -254,19 +233,19 @@ export default function DetailPage() {
         return <table style={ tableStyle }>
             <tr>
                 <td> { /* indicator */ }
-                    <div style={indicatorStyle[linuxLoginStatus]}/>
+                    <LightIndicator color={statusToColor(linuxLoginStatus)} />
                 </td>
                 <td>linux 登录状态</td>
             </tr>
             <tr>
                 <td> { /* indicator */ }
-                    <div style={indicatorStyle[vesperLauncherStatus]}/>
+                    <LightIndicator color={statusToColor(vesperLauncherStatus)} />
                 </td>
                 <td>落霞引导 (vesper launcher) 状态</td>
             </tr>
             <tr>
                 <td> { /* indicator */ }
-                    <div style={indicatorStyle[vesperCoreStatus]}/>
+                    <LightIndicator color={statusToColor(vesperCoreStatus)} />
                 </td>
                 <td>落霞核心 (vesper core) 状态</td>
             </tr>

@@ -6,7 +6,7 @@
  * 果团团控制台通用网络请求工具。
  */
 
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios"
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios"
 import { globalHooks, resetGlobalData } from "../common/GlobalData"
 import { HttpStatusCode } from "./HttpStatusCode"
 import URLNavigate from "./URLNavigate"
@@ -34,16 +34,6 @@ export interface IResponse {
     data: any
 }
 
-/**
- * 默认的网络异常处理逻辑：弹出提示信息。
- * 
- * @param isReallyNetworkError 是不是真的是网络错误。当服务器后端出现错误，也会调用此函数。
- */
-function defaultNetworkExceptionHandler(isReallyNetworkError: boolean) {
-    globalHooks.app.message.error({
-        content: isReallyNetworkError ? '网络异常' : '服务器异常'
-    })
-}
 
 /**
  * 默认的未登录处理逻辑：跳转到登录页。
@@ -79,6 +69,8 @@ export type VFRequestCtrlOptions = {
      * 仅限 vesper center api
      */
     giveResDataToCaller?: boolean
+
+    toNetDiagnosePageOnNetErrWhenCallingOwnApi?: boolean
 }
 
 
@@ -91,7 +83,9 @@ const vfRequestDefaultCtrlOptions: VFRequestCtrlOptions = {
 
     autoHandleNonOKResults: false,
     rejectNonOKResults: false,
-    giveResDataToCaller: false
+    giveResDataToCaller: false,
+
+    toNetDiagnosePageOnNetErrWhenCallingOwnApi: true,
 }
 
 /**
@@ -209,10 +203,10 @@ export function request(
                     
             } else if (isQueryOurApi && !vfOpts.useOriginalResult) {
                 // now, http request's status code is not 200+OK
-                // 如果果团后端的 http 状态非 200，说明后端出现异常。
+                // 如果果团后端的 http 状态非 200，说明后端或网络出现异常。
 
-                if (vfOpts.useDefaultNetworkExceptionHandler) {
-                    defaultNetworkExceptionHandler(false)
+                if (vfOpts.useDefaultNetworkExceptionHandler) {    
+                    globalHooks.app.message.error(`网络异常。状态码：${res.status}`)
                 }
 
                 reject(res)
@@ -223,12 +217,26 @@ export function request(
                 resolve(res)
             }
             
-        }).catch(err => {
+        }).catch((err: AxiosError) => {
             
             // axios 请求异常。
 
-            if (vfOpts.useDefaultNetworkExceptionHandler) {
-                defaultNetworkExceptionHandler(true)
+            let solved = false
+
+            if (
+                vfOpts.useDefaultNetworkExceptionHandler
+                || vfOpts.toNetDiagnosePageOnNetErrWhenCallingOwnApi
+            ) {
+                if (err.code === AxiosError.ERR_NETWORK) {
+                    solved = true
+                    globalHooks.app.navigate!({ pathname: '/net-diagnose' })
+                }
+            }
+            
+            
+            if (!solved && vfOpts.useDefaultNetworkExceptionHandler) {
+                globalHooks.app.message.error(`axios 异常。请联系开发人员。（${err.message}）`)
+                solved = true
             }
 
             reject(err)

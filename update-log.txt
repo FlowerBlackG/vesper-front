@@ -1,7 +1,7 @@
 
-version  tag  : next-20240619
+version  tag  : 1.2.0
 version  code : 7
-complete time : 2024-06-19T20:38+08:00
+complete time : 2024-08-18T19:46+08:00
 update   log  :
 
 Login Page:
@@ -14,6 +14,9 @@ My Profile Page:
 
 Seat Detail Page:
   Seats' linux login password is now displayed.
+
+New:
+  Network Diagnose is available.
 
 --------------------------------
 

@@ -14,6 +14,7 @@ import LoginPageBackgroundGalleryPage from "../../pages/login-page-background-ga
 import LoginPage from "../../pages/login/Login"
 import MyPermissionsPage from "../../pages/my-permissions/MyPermissions"
 import MyProfilePage from "../../pages/my-profile/MyProfile"
+import NetDiagnosePage from "../../pages/net-diagnose/NetDiagnosePage"
 import SeatsPage from "../../pages/seats/Seats"
 import SeatsSubPages from "../../pages/seats/SeatsSubPages"
 import SystemLoadPage from "../../pages/system-load/SystemLoad"
@@ -77,6 +78,16 @@ export default class PageRoutes {
             path: '/init',
             name: '首次启动',
             element: <InitPage />,
+            inFrame: false,
+            showInSidebar: false,
+            showInHomePage: false,
+        },
+
+        
+        {
+            path: '/net-diagnose',
+            name: '网络诊断',
+            element: <NetDiagnosePage />,
             inFrame: false,
             showInSidebar: false,
             showInHomePage: false,
