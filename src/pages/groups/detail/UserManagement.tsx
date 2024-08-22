@@ -4,11 +4,11 @@
  * 创建于 2024年4月1日 上海市嘉定区
  */
 
-import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Popconfirm, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
+import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Popconfirm, Row, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
 import { ensureGlobalData, globalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
 import { useConstructor } from "../../../utils/react-functional-helpers"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { IResponse, request } from "../../../utils/request"
 import { HttpStatusCode } from "../../../utils/HttpStatusCode"
 import { useSearchParams } from "react-router-dom"
@@ -16,14 +16,16 @@ import { later } from "../../../utils/later"
 import DateTimeUtils from "../../../utils/DateTimeUtils"
 import { GroupPermissionEntity, GroupPermissionGrantEntity, SeatEntity, UserEntity, UserGroupEntity } from "../../../api/Entities"
 import { GroupPermission } from "../../../api/Permissions"
-import { PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from "@ant-design/icons"
+import { ExportOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, UsergroupAddOutlined } from "@ant-design/icons"
 
 import '../../../index.css'
 import Dragger from "antd/es/upload/Dragger"
 import CSVSheet from "../../../utils/CSVSheet"
 import { CreateSeatsResponseDto } from "../../../api/SeatController"
+import * as XLSX from 'xlsx'
 
 import styles from './UserManagement.module.css'
+import XlsxUtils from "../../../utils/XlsxUtils"
 
 
 interface UserManagementProps {
@@ -186,6 +188,7 @@ export function UserManagement(props: UserManagementProps) {
     }
 
     /* methods */
+
     function fetchData() {
         setPageLoading(true)
         request({
@@ -210,6 +213,31 @@ export function UserManagement(props: UserManagementProps) {
         .finally(() => {
             setPageLoading(false)
         })
+    }
+
+
+    function exportUserTable() {
+        let tableData = structuredClone(tableDataSource)
+        for (let it of tableData) {
+            it['vesper-username'] = it['username']
+        }
+        
+        let sheet = XLSX.utils.json_to_sheet(tableData)
+        let csv = XLSX.utils.sheet_to_csv(sheet)
+        
+        
+        // todo: make following a helper function
+        
+        let mime = 'text/csv;encoding:utf-8'
+        let filename = '群组用户名单.csv'
+        
+        let aLink = document.createElement('a')
+        
+        aLink.href = URL.createObjectURL( new Blob([csv], {type: mime}) )
+        aLink.setAttribute('download', filename)
+        aLink.click()
+
+
     }
 
     /* render */
@@ -244,6 +272,15 @@ export function UserManagement(props: UserManagementProps) {
                     shape="circle" ghost
                     type="primary"
                     onClick={() => setAddUsersDialogOpen(true)}
+                />
+            </Tooltip>,
+            
+            <Tooltip title='导出用户名单'>
+                <Button style={{ marginLeft: 8 }}
+                    icon={<ExportOutlined />}
+                    shape="circle" ghost
+                    type="primary"
+                    onClick={exportUserTable}
                 />
             </Tooltip>,
         ]
@@ -523,6 +560,41 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
     const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
     const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
 
+    
+    const userTableCSVBuf = useRef<ArrayBuffer | null>(null)
+    const userTableCSVEncoding = useRef('utf-8')
+
+    // you should call this once CSVBuf or CSVEncoding changed.
+    function bufferToTableDataSource() {
+        
+        const buf = userTableCSVBuf.current
+        const encoding = userTableCSVEncoding.current
+        
+        if (buf === null) {
+            setTableDataSource([])
+            return
+        }
+
+        const decoder = new TextDecoder(encoding)
+        
+        let csv = new CSVSheet(decoder.decode(buf))
+        let users = csv.getCol('vesper-username')
+        let dataSource = [] as AddMultipleUsersTableEntry[]
+        if (users !== null) {
+            for (let it of users) {
+                dataSource.push({
+                    userId: null,
+                    username: it,
+                    seatId: null,
+                    status: 'pending',
+                    msg: '未上传',
+                })
+            }
+        } // if (users !== null)
+        setTableDataSource(dataSource)
+        setUploadButtonDisabled(dataSource.length === 0)
+    }
+
 
     function commitAddUsers() {
         setConfirmLoading(true)
@@ -629,6 +701,13 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
         destroyOnClose={true}
         open={props.open}
         onClose={() => {
+            setConfirmLoading(false)
+            setTableDataSource([])
+            setUploadButtonDisabled(true)
+            setAlsoCreateSeats(false)
+            setTemplateSeatId(-1)
+            userTableCSVBuf.current = null
+            userTableCSVEncoding.current = 'utf-8'
             props.onClose()
         }}
         maskClosable={false}
@@ -653,24 +732,10 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             accept='.csv'
             maxCount={1}
             beforeUpload={(file, fileList) => {
-                file.text().then(res => {
-                    let csv = new CSVSheet(res)
-                    let users = csv.getCol('vesper-username')
-                    let dataSource = [] as AddMultipleUsersTableEntry[]
-                    if (users !== null) {
-                        for (let it of users) {
-                            dataSource.push({
-                                userId: null,
-                                username: it,
-                                seatId: null,
-                                status: 'pending',
-                                msg: '未上传',
-                            })
-                        }
-                    } // if (users !== null)
-                    setTableDataSource(dataSource)
-                    setUploadButtonDisabled(dataSource.length === 0)
-                }) // file.text().then(res =>
+                file.arrayBuffer().then(buf => {
+                    userTableCSVBuf.current = buf
+                    bufferToTableDataSource()
+                }) // file.arrayBuffer().then(buf =>
                 return false
             }} // beforeUpload={(file, fileList) => {
         >
@@ -712,7 +777,18 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
 
         <Divider />
 
-        <p>添加信息预览</p>
+        <Row style={{ alignItems: 'center'}}>
+            <p style={{ flexGrow: 1 }}>添加信息预览</p>
+            <text>使用GB18030</text>
+            <Switch
+                checked={ userTableCSVEncoding.current === 'gb18030' }
+                style={{ marginLeft: 8 }}
+                onChange={(checked) => {
+                    userTableCSVEncoding.current = checked ? 'gb18030' : 'utf-8'
+                    bufferToTableDataSource()
+                }}
+            />
+        </Row>
 
         <Table
             columns={[

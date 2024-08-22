@@ -5,12 +5,12 @@
     创建于2024年3月14日 上海市嘉定区
 */
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import PageRouteManager from '../../common/PageRoutes/PageRouteManager'
 import './UserManagement.module.css'
 import { useConstructor } from '../../utils/react-functional-helpers'
-import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Spin, Switch, Table, TablePaginationConfig, Tooltip, notification } from 'antd'
+import { Button, Card, Descriptions, Divider, Drawer, FloatButton, Form, Image, Input, Modal, Row, Spin, Switch, Table, TablePaginationConfig, Tooltip, notification } from 'antd'
 import { PermissionEntity, UserEntity } from '../../api/Entities'
 import { IResponse, request } from '../../utils/request'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
@@ -402,18 +402,57 @@ interface DeleteUsersUserEntity {
     resultMsg: string
 }
 
+
 function DeleteUsersDialog(props: DeleteUsersDialogProps) {
 
     const message = globalHooks.app.message
 
     const [confirmLoading, setConfirmLoading] = useState(false)
     const [tableDataSource, setTableDataSource] = useState<DeleteUsersUserEntity[]>([])
+    const userTableCSVBuf = useRef<ArrayBuffer | null>(null)
+    const userTableCSVEncoding = useRef('utf-8')
 
+
+    function bufferToTableDataSource() {
+        
+        const buf = userTableCSVBuf.current
+        const encoding = userTableCSVEncoding.current
+        
+        if (buf === null) {
+            setTableDataSource([])
+            return
+        }
+
+        const decoder = new TextDecoder(encoding)
+        
+        let csv = new CSVSheet(decoder.decode(buf))
+        let users = csv.getCol('vesper-username')
+        let dataSource = [] as DeleteUsersUserEntity[]
+        if (users !== null) {
+            for (let it of users) {
+                dataSource.push({
+                    id: null,
+                    username: it,
+                    result: 'pending',
+                    resultMsg: '未上传',
+                })
+            }
+        } // if (users !== null)
+        setTableDataSource(dataSource)
+    }
+
+    
 
     return <Drawer
         title='批量删除用户'
         size='large'
-        onClose={props.onClose}
+        onClose={() => {
+            setConfirmLoading(false)
+            setTableDataSource([])
+            userTableCSVBuf.current = null
+            userTableCSVEncoding.current = 'utf-8'
+            props.onClose()
+        }}
         open={props.open}
         destroyOnClose={true}
         closable={!confirmLoading}
@@ -439,22 +478,10 @@ function DeleteUsersDialog(props: DeleteUsersDialogProps) {
             maxCount={1}
             height={144}
             beforeUpload={(file, fileList) => {
-                file.text().then(res => {
-                    let csv = new CSVSheet(res)
-                    let users = csv.getCol('vesper-username')
-                    let dataSource = [] as DeleteUsersUserEntity[]
-                    if (users !== null) {
-                        for (let it of users) {
-                            dataSource.push({
-                                id: null,
-                                username: it,
-                                result: 'pending',
-                                resultMsg: '未上传',
-                            })
-                        }
-                    } // if (users !== null)
-                    setTableDataSource(dataSource)
-                }) // file.text().then(res =>
+                file.arrayBuffer().then(buf => {
+                    userTableCSVBuf.current = buf
+                    bufferToTableDataSource()
+                }) // file.arrayBuffer().then(buf =>
                 return false
             }} // beforeUpload={(file, fileList) => {
         >
@@ -466,7 +493,20 @@ function DeleteUsersDialog(props: DeleteUsersDialogProps) {
 
         <Divider />
 
-        <p>待删除用户预览</p>
+
+        <Row style={{ alignItems: 'center'}}>
+            <p style={{ flexGrow: 1 }}>待删除用户预览</p>
+            <text>使用GB18030</text>
+            <Switch
+                checked={ userTableCSVEncoding.current === 'gb18030' }
+                style={{ marginLeft: 8 }}
+                onChange={(checked) => {
+                    userTableCSVEncoding.current = checked ? 'gb18030' : 'utf-8'
+                    bufferToTableDataSource()
+                }}
+            />
+        </Row>
+
 
         <Spin spinning={confirmLoading}><Table 
             dataSource={tableDataSource}
@@ -889,6 +929,42 @@ function AddUsersDialog(props: AddUsersDialogProps) {
 
     const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true)
 
+    
+    const userTableCSVBuf = useRef<ArrayBuffer | null>(null)
+    const userTableCSVEncoding = useRef('utf-8')
+
+
+    function bufferToTableDataSource() {
+        
+        const buf = userTableCSVBuf.current
+        const encoding = userTableCSVEncoding.current
+        
+        if (buf === null) {
+            setTableDataSource([])
+            return
+        }
+
+        const decoder = new TextDecoder(encoding)
+        
+        let csv = new CSVSheet(decoder.decode(buf))
+        let users = csv.getCol('vesper-username')
+        let dataSource = [] as AddUsersUserEntity[]
+        if (users !== null) {
+            for (let it of users) {
+                dataSource.push({
+                    id: null,
+                    username: it,
+                    result: 'pending',
+                    resultMsg: '未上传',
+                    passwd: null,
+                    group: null
+                })
+            }
+        } // if (users !== null)
+        setTableDataSource(dataSource)
+        setUploadButtonDisabled(dataSource.length === 0)
+    }
+
 
     function downloadDataSourceTable(dataSource: AddUsersUserEntity[]) {
 
@@ -919,6 +995,11 @@ function AddUsersDialog(props: AddUsersDialogProps) {
         destroyOnClose={true}
         open={props.open}
         onClose={() => {
+            setTableDataSource([])
+            setUploadButtonDisabled(true)
+            setAddUsersDialogConfirmLoading(false)
+            userTableCSVBuf.current = null
+            userTableCSVEncoding.current = 'utf-8'
             props.onClose()
         }}
         maskClosable={false}
@@ -943,25 +1024,11 @@ function AddUsersDialog(props: AddUsersDialogProps) {
             accept='.csv'
             maxCount={1}
             beforeUpload={(file, fileList) => {
-                file.text().then(res => {
-                    let csv = new CSVSheet(res)
-                    let users = csv.getCol('vesper-username')
-                    let dataSource = [] as AddUsersUserEntity[]
-                    if (users !== null) {
-                        for (let it of users) {
-                            dataSource.push({
-                                id: null,
-                                username: it,
-                                result: 'pending',
-                                resultMsg: '未上传',
-                                passwd: null,
-                                group: null
-                            })
-                        }
-                    } // if (users !== null)
-                    setTableDataSource(dataSource)
-                    setUploadButtonDisabled(dataSource.length === 0)
-                }) // file.text().then(res =>
+                file.arrayBuffer().then(buf => {
+                    userTableCSVBuf.current = buf
+                    bufferToTableDataSource()
+                    
+                }) // file.arrayBuffer().then(buf =>
                 return false
             }} // beforeUpload={(file, fileList) => {
         >
@@ -974,7 +1041,19 @@ function AddUsersDialog(props: AddUsersDialogProps) {
 
         <Divider />
 
-        <p>注册信息预览</p>
+        
+        <Row style={{ alignItems: 'center'}}>
+            <p style={{ flexGrow: 1 }}>注册信息预览</p>
+            <text>使用GB18030</text>
+            <Switch
+                checked={ userTableCSVEncoding.current === 'gb18030' }
+                style={{ marginLeft: 8 }}
+                onChange={(checked) => {
+                    userTableCSVEncoding.current = checked ? 'gb18030' : 'utf-8'
+                    bufferToTableDataSource()
+                }}
+            />
+        </Row>
 
         <Table
             columns={[
