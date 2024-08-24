@@ -8,12 +8,24 @@ import { SeatEntity } from "./Entities"
 
 
 export interface CreateSeatsResponseDtoEntry {
-    userId: number
-    groupId: number | null
-    seatInfo: SeatEntity
+    uniqueKey: number
+    success: boolean
+    msg: string
+    seatInfo: SeatEntity | null
 }
 
 export type CreateSeatsResponseDto =  CreateSeatsResponseDtoEntry[]
+
+export interface CreateSeatsRequestDtoEntry {
+    uniqueKey: number
+    group?: number
+    username?: string
+    userid?: number
+    skel?: number
+    note?: string
+}
+
+export type CreateSeatsRequestDto = CreateSeatsRequestDtoEntry[]
 
 
 export type GetSeatsResponseDtoEntry = {

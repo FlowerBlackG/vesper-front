@@ -4,7 +4,7 @@
  * 创建于 2024年4月1日 上海市嘉定区
  */
 
-import { Button, Divider, Drawer, Flex, FloatButton, Image, Modal, Popconfirm, Row, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
+import { Button, Divider, Drawer, Flex, FloatButton, Image, Input, Modal, Popconfirm, Row, Select, Space, Spin, Switch, Table, Tooltip, message } from "antd"
 import { ensureGlobalData, globalData, globalHooks } from "../../../common/GlobalData"
 import PageRouteManager from "../../../common/PageRoutes/PageRouteManager"
 import { useConstructor } from "../../../utils/react-functional-helpers"
@@ -21,7 +21,7 @@ import { ExportOutlined, PlusOutlined, UploadOutlined, UserAddOutlined, Usergrou
 import '../../../index.css'
 import Dragger from "antd/es/upload/Dragger"
 import CSVSheet from "../../../utils/CSVSheet"
-import { CreateSeatsResponseDto } from "../../../api/SeatController"
+import { CreateSeatsRequestDto, CreateSeatsRequestDtoEntry, CreateSeatsResponseDto, CreateSeatsResponseDtoEntry } from "../../../api/SeatController"
 import * as XLSX from 'xlsx'
 
 import styles from './UserManagement.module.css'
@@ -257,17 +257,9 @@ export function UserManagement(props: UserManagementProps) {
     function addUserFloatingButtonGroup() {
 
         return [
-            <Tooltip title='添加用户'>
-                <Button
-                    icon={<UserAddOutlined />}
-                    shape="circle" ghost
-                    type="primary"
-                    onClick={() => setAddUserDialogOpen(true)}
-                />
-            </Tooltip>,
             
             <Tooltip title='批量添加用户'>
-                <Button style={{ marginLeft: 8 }}
+                <Button style={{ marginLeft: 0 }}
                     icon={<UsergroupAddOutlined />}
                     shape="circle" ghost
                     type="primary"
@@ -284,21 +276,6 @@ export function UserManagement(props: UserManagementProps) {
                 />
             </Tooltip>,
         ]
-    }
-
-
-    function addUserDialog() {
-        return <Modal
-            title='添加用户'
-            centered={true}
-            closable={true}
-            open={addUserDialogOpen}
-            destroyOnClose={true}
-            confirmLoading={addUserDialogConfirmLoading}
-            onCancel={() => setAddUserDialogOpen(false)}
-        >
-            暂不支持
-        </Modal>
     }
 
 
@@ -339,7 +316,6 @@ export function UserManagement(props: UserManagementProps) {
             }
         </Flex>
 
-        { addUserDialog() }
         <AddMultipleUsersDialog
             groupId={props.groupId}
             open={addUsersDialogOpen}
@@ -499,22 +475,30 @@ function AddSingleSeatDialog(props: AddSingleSeatDialogProps) {
                     setLoading(true)
                     request({
                         url: 'seat/new',
-                        data: {
-                            group: props.groupId,
-                            users: [props.user?.id],
-                            skel: templateSeatId === -1 ? undefined : templateSeatId,
-                            note: `${props.user?.username}在第${props.groupId}组的桌面环境`
-                        },
+                        data: [
+                            {
+                                uniqueKey: 0,
+                                group: props.groupId,
+                                userid: props.user?.id,
+                                skel: templateSeatId === -1 ? undefined : templateSeatId,
+                                note: `${props.user?.username}在第${props.groupId}组的桌面环境`
+                            }
+                        ] as CreateSeatsRequestDto,
                         method: 'post',
                         vfOpts: {
                             rejectNonOKResults: true,
                             autoHandleNonOKResults: true,
                             giveResDataToCaller: true
                         }
-                    }).then(_ => {
-                        globalHooks.app.message.success('创建成功')
-                        if (props.afterAddSeats) {
-                            props.afterAddSeats()
+                    }).then(untypedRes => {
+                        const resEntry = untypedRes[0] as CreateSeatsResponseDtoEntry  // todo: check array's length before accessing.
+                        if (resEntry.success) {
+                            globalHooks.app.message.success(resEntry.msg)
+                            if (props.afterAddSeats) {
+                                props.afterAddSeats()
+                            }
+                        } else {
+                            globalHooks.app.message.error(resEntry.msg)
                         }
                         
                     }).catch(() => {}).finally(() => {
@@ -542,11 +526,12 @@ interface AddMultipleUsersDialogProps {
 
 
 interface AddMultipleUsersTableEntry {
+    uniqueKey: number
     userId: number | null
     username: string
-    seatId: number | null
     status: 'pending' | 'success' | 'failed'
     msg: string
+    createSeatAPIResponse: CreateSeatsResponseDtoEntry | null
 }
 
 function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
@@ -560,9 +545,12 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
     const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
     const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
 
+    const [singleAddInputContent, setSingleAddInputContent] = useState("")
+
     
     const userTableCSVBuf = useRef<ArrayBuffer | null>(null)
     const userTableCSVEncoding = useRef('utf-8')
+    const uniqueKeyCounter = useRef(0)
 
     // you should call this once CSVBuf or CSVEncoding changed.
     function bufferToTableDataSource() {
@@ -583,11 +571,12 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
         if (users !== null) {
             for (let it of users) {
                 dataSource.push({
+                    uniqueKey: ++ uniqueKeyCounter.current,
                     userId: null,
                     username: it,
-                    seatId: null,
                     status: 'pending',
                     msg: '未上传',
+                    createSeatAPIResponse: null,
                 })
             }
         } // if (users !== null)
@@ -653,16 +642,27 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             setConfirmLoading(true)
         }
 
+        const requestDto: CreateSeatsRequestDto = tableDataSource
+            .filter(it => it.status === 'success')
+            .filter(it => {
+                if (it.createSeatAPIResponse === null)
+                    return true
+                return it.createSeatAPIResponse.success === false
+            })
+            .map(it => {
+                return {
+                    uniqueKey: it.uniqueKey,
+                    group: props.groupId,
+                    userid: it.userId,
+                    skel: templateSeatId === -1 ? undefined : templateSeatId,
+                } as CreateSeatsRequestDtoEntry
+            })
+
+
         request({
             url: 'seat/new',
             method: 'post',
-            data: {
-                group: props.groupId,
-                skel: templateSeatId === -1 ? undefined : templateSeatId,
-                users: tableDataSource
-                    .filter(it => it.status === 'success')
-                    .map(it => it.userId)
-            },
+            data: requestDto,
             vfOpts: {
                 rejectNonOKResults: true,
                 autoHandleNonOKResults: true,
@@ -670,15 +670,18 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             }
         }).then(untypedRes => {
             const res = untypedRes as CreateSeatsResponseDto
-            const successMap = new Map<number, SeatEntity>()  // userId -> SeatEntity
-            res.forEach(it => successMap.set(it.userId, it.seatInfo))
+            const resMap = new Map<number, CreateSeatsResponseDtoEntry>()  // uniqueKey -> entry
+
+            res.forEach(it => resMap.set(it.uniqueKey, it))
+            
             for (const tableIt of tableDataSource) {
-                if (tableIt.userId === null) {
+                if (tableIt.uniqueKey === null) {
                     continue
                 }
 
-                if (successMap.has(tableIt.userId)) {
-                    tableIt.seatId = successMap.get(tableIt.userId)!.id
+                if (resMap.has(tableIt.uniqueKey)) {
+                    const dtoEntry = resMap.get(tableIt.uniqueKey)!
+                    tableIt.createSeatAPIResponse = dtoEntry
                 }
             }
 
@@ -706,8 +709,10 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             setUploadButtonDisabled(true)
             setAlsoCreateSeats(false)
             setTemplateSeatId(-1)
+            setSingleAddInputContent("")
             userTableCSVBuf.current = null
             userTableCSVEncoding.current = 'utf-8'
+            uniqueKeyCounter.current = 0
             props.onClose()
         }}
         maskClosable={false}
@@ -742,8 +747,39 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             <p className='ant-upload-drag-icon'>
                 <UploadOutlined />
             </p>
-            <p className='ant-upload-text'>点击我 或 拖拽 CSV 文件到这里</p>
+            <p className='ant-upload-text'>点击我 或 拖拽 CSV 文件到这里（⚠ 会清空下表的所有内容）</p>
         </Dragger>
+
+        <p>你也可以直接在这里输入待添加成员的用户名 👇</p>
+
+        <Space.Compact style={{ width: '100%' }}>
+            <Input
+                placeholder="输入用户名，然后点击右边的加号"
+                value={ singleAddInputContent }
+                onChange={(event) => {
+                    setSingleAddInputContent(event.currentTarget.value)
+                }}
+            />
+            <Button 
+                icon={ <PlusOutlined/> } 
+                type="primary"
+                disabled={ singleAddInputContent === "" }
+                onClick={() => {
+                    setTableDataSource([
+                        {
+                            uniqueKey: ++ uniqueKeyCounter.current,
+                            userId: null,
+                            username: singleAddInputContent,
+                            status: 'pending',
+                            msg: '未上传',
+                            createSeatAPIResponse: null,
+                        },
+                        ...tableDataSource
+                    ])
+                    setSingleAddInputContent("")
+                }}
+            />
+        </Space.Compact>
 
         <Flex vertical style={{
             marginTop: 16,
@@ -775,6 +811,12 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
 
         </Flex>
 
+        <Divider />
+
+        <p>如果表格中有乱码，可以切换“使用GB18030”开关。</p>
+        <p style={{color: "#ee3f4d"}}><b>⚠ 切换会导致手动添加的表项丢失！</b></p>
+        <p>如果要同时以表格和手动的方式添加用户，请先导入表格，切换开关，确认无乱码后再手动添加用户。</p>
+        
         <Divider />
 
         <Row style={{ alignItems: 'center'}}>
@@ -818,19 +860,33 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                     }
                 },
                 {
-                    title: '主机ID',
-                    dataIndex: 'seatId',
-                    key: 'seatId',
-                    render(it: string | null) {
-                        return it === null 
-                            ? 
-                            <div style={{color: '#ee3f4d'}}>
-                                未创建
-                            </div> 
-                            : 
-                            <div style={{color: '#41b349'}}>
-                                创建成功：{it}
+                    title: '主机情况',
+                    key: 'createSeatAPIResponse',
+                    dataIndex: 'createSeatAPIResponse',
+                    render(apiResponse: CreateSeatsResponseDtoEntry | null, entry: AddMultipleUsersTableEntry) {
+                        if (apiResponse === null) {
+                            if (entry.status === 'success')
+                                return <div style={{color: '#ee3f4d'}}>
+                                    未创建（后台未收到请求或遇到未知错误）。
+                                </div>
+                            else
+                                return <div style={{color: '#ee3f4d'}}>
+                                    未创建（尚未操作）。
+                                </div>
+                        }
+
+                        if (!apiResponse.success)
+                            return <div style={{color: '#ee3f4d'}}>
+                                { apiResponse.msg }
                             </div>
+
+                        const seat = apiResponse.seatInfo
+                        return <div style={{
+                            color: '#41b349'
+                        }}>
+                            { apiResponse.msg }（主机id：{seat?.id}）
+                        </div>
+
                     }
                 },
             ]}

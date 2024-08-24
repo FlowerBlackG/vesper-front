@@ -1,4 +1,22 @@
 
+version  tag  : 1.4.0
+version  code : 9
+complete time : 2024-08-24T14:12+08:00
+update   log  :
+
+Warning:
+  This version of Vesper Front should be paired with Vesper Center v1.3.0 or later.
+
+
+Group User Management Page:
+- Button for adding single user has been removed. You can do it using Add multiple user now.
+* Catch up with Vesper Center's API change.
++ You can now add single user to ready table in "Add Multiple User" drawer.
+* Some optimizations...
+
+
+--------------------------------
+
 version  tag  : 1.3.0
 version  code : 8
 complete time : 2024-08-22T12:07+08:00
