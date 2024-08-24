@@ -1,4 +1,14 @@
 
+version  tag  : 1.4.1
+version  code : 10
+complete time : 2024-08-24T14:28+08:00
+update   log  :
+
+Some optimization...
+
+--------------------------------
+
+
 version  tag  : 1.4.0
 version  code : 9
 complete time : 2024-08-24T14:12+08:00

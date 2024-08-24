@@ -865,7 +865,7 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
                     dataIndex: 'createSeatAPIResponse',
                     render(apiResponse: CreateSeatsResponseDtoEntry | null, entry: AddMultipleUsersTableEntry) {
                         if (apiResponse === null) {
-                            if (entry.status === 'success')
+                            if (entry.status === 'success' && alsoCreateSeats)
                                 return <div style={{color: '#ee3f4d'}}>
                                     未创建（后台未收到请求或遇到未知错误）。
                                 </div>
