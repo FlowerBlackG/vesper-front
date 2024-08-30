@@ -28,10 +28,10 @@ const VESPER_SESSION_TOKEN_DATASTORE_KEY = "vesper-session-token"
  * 请求出现问题时，会将可以展示给用户的信息写在msg里（一般情况下）。
  * 请求出现问题时，data可能不可用。
  */
-export interface IResponse {
+export interface IResponse <T=any> {
     code: HttpStatusCode,
     msg: string,
-    data: any
+    data: T
 }
 
 

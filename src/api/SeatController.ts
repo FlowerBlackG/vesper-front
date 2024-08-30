@@ -30,6 +30,7 @@ export type CreateSeatsRequestDto = CreateSeatsRequestDtoEntry[]
 
 export type GetSeatsResponseDtoEntry = {
     username: string
+    groupname: string
 } & SeatEntity
 
-export type GetSeatsResponseDto = GetSeatsResponseDtoEntry[]
+export type GetSeatsResponseDto = PagedResult<GetSeatsResponseDtoEntry>

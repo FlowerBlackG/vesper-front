@@ -1,4 +1,21 @@
 
+version  tag  : 1.5.0
+version  code : 11
+complete time : 2024-08-30T17:02+08:00
+update   log  :
+
+Warning:
+  This version of Vesper Front should be paired with Vesper Center v1.4.0 or later.
+
+
+Seat List:
+  Add paging support.
+  Add search support.
+  Admin can now enable or disable single seat.
+  Group name is now shown.
+
+--------------------------------
+
 version  tag  : 1.4.1
 version  code : 10
 complete time : 2024-08-24T14:28+08:00

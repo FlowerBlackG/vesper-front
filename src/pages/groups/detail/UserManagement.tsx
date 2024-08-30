@@ -379,6 +379,7 @@ function SeatTemplateSelector(props: SeatTemplateSelectorProps) {
                 groupId: props.groupId,
                 viewAllSeatsInGroup: false,
                 alsoSeatsInNonGroupMode: true,
+                pageSize: 100000000000000
             },
             vfOpts: {
                 giveResDataToCaller: true,
@@ -388,7 +389,7 @@ function SeatTemplateSelector(props: SeatTemplateSelectorProps) {
         }).then(res => {
             dropdownEntries.length = 0
             dropdownEntries.push(dropdownEntryForNoTemplate)
-            for (const it of res) {
+            for (const it of res.records) {
                 dropdownEntries.push({
                     label: `${it.id}: ${it.nickname}`,
                     value: it.id

@@ -11,7 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import { SeatEntity } from '../../api/Entities'
-import { Button, Drawer, Flex, Input, Modal, Popover, Spin, StepProps, Steps, Table, message } from 'antd'
+import { Button, Divider, Drawer, Flex, Input, Modal, Popover, Row, Spin, StepProps, Steps, Switch, Table, TablePaginationConfig, TableProps, message } from 'antd'
 import { IResponse, VFRequestCtrlOptions, VFRequestParams, request } from '../../utils/request'
 import { DeleteOutlined, PoweroffOutlined } from '@ant-design/icons'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
@@ -59,7 +59,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
     useImperativeHandle(ref, () => {
         return {
             reloadTableData() {
-                fetchData()
+                fetchData(pagination)
             }
         }
     }, [])
@@ -68,12 +68,20 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
     /* states */
 
     const [dataLoading, setDataLoading] = useState(false)
-    const [tableDataSource, setTableDataSource] = useState<GetSeatsResponseDto>([])
+    const [tableDataSource, setTableDataSource] = useState<GetSeatsResponseDtoEntry[]>([])
 
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false)
     const [deleteSeatEntity, setDeleteSeatEntity] = useState<GetSeatsResponseDtoEntry | null>(null)
 
     const [singleClickLoginSeat, setSingleClickLoginSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
+    const [pagination, setPagination] = useState<TablePaginationConfig>({
+        current: 1,
+        pageSize: 20,
+        total: 0
+    })
+
+    const [search, setSearch] = useState('')
+
 
     /* constructor */
     useConstructor(constructor)
@@ -88,7 +96,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
                 }
             }
 
-            fetchData()
+            fetchData(pagination)
 
         }).catch(err => {})
     }
@@ -158,9 +166,12 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             }
         },
         {
-            title: '组号',
+            title: '组',
             dataIndex: 'groupId',
             key: 'groupId',
+            render(_: any, record: GetSeatsResponseDtoEntry) {
+                return `${record.groupname} (${record.groupId})`
+            }
         },
         {
             title: '用户',
@@ -189,11 +200,48 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             dataIndex: 'seatEnabled',
             key: 'seatEnabled',
             render: (_: any, seat: GetSeatsResponseDtoEntry) => {
-                return seat.seatEnabled
-                    ?
-                    <div style={{ color: '#41b349' }}>启用</div> 
-                    :
-                    <div style={{ color: '#ee3f4d' }}>停用</div> 
+
+                let switchMode = globalData.userPermissions.has(Permission.DISABLE_OR_ENABLE_ANY_SEAT)
+                if (!switchMode && groupMode)
+                    switchMode = globalData.groupPermissions.has(groupId, GroupPermission.DISABLE_OR_ENABLE_ANY_SEAT)
+
+
+                if (switchMode) {
+
+                    return <Switch 
+                        checked={seat.seatEnabled} 
+                        onChange={(checked) => {
+                            request({
+                                url: 'seat/enable',
+                                method: 'post',
+                                vfOpts: {
+                                    giveResDataToCaller: true,
+                                    rejectNonOKResults: true,
+                                    autoHandleNonOKResults: true
+                                },
+                                data: {
+                                    seatId: seat.id,
+                                    enabled: checked,
+                                    alsoQuit: !checked
+                                }
+                            }).then(res => {
+                                globalHooks.app.message.success('操作成功。')
+                                seat.seatEnabled = checked
+                                setTableDataSource([...tableDataSource])
+                            }).catch(err => {}).finally(() => {
+
+                            })
+                        }}
+                    />
+
+                } else {
+
+                    return seat.seatEnabled
+                        ?
+                        <div style={{ color: '#41b349' }}>启用</div> 
+                        :
+                        <div style={{ color: '#ee3f4d' }}>停用</div> 
+                }
             }
         },
         {
@@ -309,22 +357,30 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
     /* methods */
 
-    function fetchData() {
+    function fetchData(pagination: TablePaginationConfig) {
         setDataLoading(true)
         request({
             url: 'seat/seats',
             params: {
                 groupId: groupMode ? groupId : undefined,
-                viewAllSeatsInGroup: true
+                viewAllSeatsInGroup: true,
+                pageNo: pagination.current,
+                pageSize: pagination.pageSize,
+                search: search
             }
-        }).then(res => {
-            res = res as IResponse
+        }).then(untypedRes => {
+            const res = untypedRes as IResponse<PagedResult<GetSeatsResponseDtoEntry>>
             if (res.code !== HttpStatusCode.OK) {
                 message.error(res.msg)
                 return
             }
 
-            loadData(res.data as GetSeatsResponseDto)
+            setPagination({
+                total: res.data.total,
+                current: res.data.pageNo,
+                pageSize: res.data.pageSize
+            })
+            loadData(res.data.records)
         }).catch(err => {})
         .finally(() => {
             setDataLoading(false)
@@ -332,7 +388,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
     }
 
 
-    function loadData(data: GetSeatsResponseDto) {
+    function loadData(data: GetSeatsResponseDtoEntry[]) {
         setTableDataSource(data)
     }
 
@@ -358,7 +414,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             }
         }).then(res => {
             globalHooks.app.message.success('操作成功')
-            fetchData()
+            fetchData(pagination)
         }).catch(_ => {
             setDataLoading(false)
         })
@@ -386,15 +442,59 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
         style={containerStyle}
         className='overflow-y-overlay overflow-x-overlay'
     >
+
+        { /* filters */ }
+
+        <Flex vertical
+            style={{
+                marginTop: 4
+            }}
+        >
+            <Flex style={{ height: 32, alignItems: 'center' }}>
+                <p>搜索项：</p>
+                <Input
+                    value={search}
+                    onChange={(event) => {
+                        setSearch(event.currentTarget.value)
+                    }}
+                    style={{
+                        width: 'auto',
+                        height: '100%',
+                        flexGrow: 1,
+                        
+                    }}
+                    placeholder='空格分隔搜索词'
+                />
+            </Flex>
+            <Button
+                shape='round'
+                ghost
+                type='primary'
+                style={{
+                    width: 64,
+                    alignSelf: 'end',
+                    marginTop: 4
+                }}
+                onClick={() => fetchData(pagination)}
+            >
+                确认
+            </Button>
+        </Flex>
+
         <div style={{
             flexGrow: 1,
             flexShrink: 0,
-            height: `calc(100% - ${toolboxHeight})`
+            height: `calc(100% - ${toolboxHeight})`,
+            marginTop: 4
         }} className='overflow-y-overlay'>
             <Spin spinning={ dataLoading }>
                 <Table
                     columns={tableColumns}
                     dataSource={tableDataSource}
+                    pagination={pagination}
+                    onChange={(newPagination) => {
+                        fetchData(newPagination)
+                    }}
                 />
             </Spin>
         </div>
