@@ -41,10 +41,7 @@ export function UserManagement(props: UserManagementProps) {
     const [tableDataSource, setTableDataSource] = useState([])
 
 
-    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false)
     const [addUsersDialogOpen, setAddUsersDialogOpen] = useState(false)
-    const [addUserDialogConfirmLoading, setAddUserDialogConfirmLoading] = useState(false)
-    const [addUsersDialogConfirmLoading, setAddUsersDialogConfirmLoading] = useState(false)
 
     const [addSeatDrawerTargetUser, setAddSeatDrawerTargetUser] = useState<UserEntity | null>(null)
 
@@ -542,7 +539,6 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
     const [confirmLoading, setConfirmLoading] = useState(false)
     const [tableDataSource, setTableDataSource] = useState<AddMultipleUsersTableEntry[]>([])
     
-    const [uploadButtonDisabled, setUploadButtonDisabled] = useState(true)
     const [alsoCreateSeats, setAlsoCreateSeats] = useState(false)
     const [templateSeatId, setTemplateSeatId] = useState(-1)  // set to -1 to disable template
 
@@ -582,7 +578,6 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             }
         } // if (users !== null)
         setTableDataSource(dataSource)
-        setUploadButtonDisabled(dataSource.length === 0)
     }
 
 
@@ -707,7 +702,6 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
         onClose={() => {
             setConfirmLoading(false)
             setTableDataSource([])
-            setUploadButtonDisabled(true)
             setAlsoCreateSeats(false)
             setTemplateSeatId(-1)
             setSingleAddInputContent("")
@@ -903,7 +897,7 @@ function AddMultipleUsersDialog(props: AddMultipleUsersDialogProps) {
             }}
             type='primary'
             shape='round'
-            disabled={uploadButtonDisabled}
+            disabled={tableDataSource.length === 0}
             onClick={() => {
                 commitAddUsers()
             }}
