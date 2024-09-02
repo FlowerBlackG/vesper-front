@@ -11,7 +11,7 @@ import React, { forwardRef, useImperativeHandle, useState } from 'react'
 import { ensureGlobalData, globalData, globalHooks } from '../../common/GlobalData'
 import { useConstructor } from '../../utils/react-functional-helpers'
 import { SeatEntity } from '../../api/Entities'
-import { Button, Divider, Drawer, Flex, Input, Modal, Popover, Row, Spin, StepProps, Steps, Switch, Table, TablePaginationConfig, TableProps, message } from 'antd'
+import { Button, Divider, Drawer, Flex, Input, Modal, Popover, StepProps, Steps, Switch, Table, TablePaginationConfig, TableProps, Tooltip, message } from 'antd'
 import { IResponse, VFRequestCtrlOptions, VFRequestParams, request } from '../../utils/request'
 import { DeleteOutlined, PoweroffOutlined } from '@ant-design/icons'
 import { HttpStatusCode } from '../../utils/HttpStatusCode'
@@ -19,6 +19,9 @@ import { PageRouteData } from '../../common/PageRoutes/TypeDef'
 import { GroupPermission, Permission } from '../../api/Permissions'
 import { GetSeatsResponseDto, GetSeatsResponseDtoEntry } from '../../api/SeatController'
 import Config from '../../common/Config'
+import { PagedResult } from '../../api/PagedResult'
+import { AutoGrowAntdTable } from '../../components/AutoGrowAntdTable/AutoGrowAntdTable'
+import { ChangeNicknameDrawer } from './ChangeNicknameDrawer'
 
 
 export interface SeatListProps {
@@ -80,6 +83,8 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
         total: 0
     })
 
+    const [changeNicknameTargetSeat, setChangeNicknameTargetSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
+
     const [search, setSearch] = useState('')
 
 
@@ -110,57 +115,15 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             key: 'id',
             render: (_: any, record: GetSeatsResponseDtoEntry) => {
 
-                const ChangeNicknamePopover = () => {
-                    const [confirmLoading, setConfirmLoading] = useState(false)
-                    let newName = ''
-
-                    const PopOverContent = () => {
-                        return <div>
-                            修改主机名
-                            <div style={{height: 8}} />
-                            <Input placeholder={record.nickname} disabled={confirmLoading}
-                                onChange={(e) => {
-                                    newName = e.target.value
-                                }}
-                            />
-                            <div style={{height: 8}} />
-                            <Button type='primary' shape='round' style={{width: '100%'}} 
-                                disabled={confirmLoading}
-                                onClick={() => {
-                                    let name = newName
-                                    setConfirmLoading(true)
-                                    request({
-                                        url: 'seat/name',
-                                        method: 'post',
-                                        data: {
-                                            seatId: record.id,
-                                            name: name
-                                        },
-                                        vfOpts: {
-                                            rejectNonOKResults: true, 
-                                            autoHandleNonOKResults: true, 
-                                            giveResDataToCaller: true
-                                        }
-                                    }).then(res => {
-                                        globalHooks.app.message.success('成功')
-                                        record.nickname = name
-                                    }).catch(err => {}).finally(() => {
-                                        setConfirmLoading(false)
-                                    })
-                                }}
-                            >
-                                确认
-                            </Button>
-                        </div>
-                    }
-
-                    return <Popover destroyTooltipOnHide={true} content={<PopOverContent/>}>
-                        <Button type='link'>{record.nickname}</Button>
-                    </Popover>
-                }
-
                 return <div>
-                    <ChangeNicknamePopover />
+                    <Tooltip title='点击以编辑'>
+                        <Button 
+                            type='link' 
+                            onClick={() => setChangeNicknameTargetSeat(record)}
+                        >
+                            {record.nickname}
+                        </Button>
+                    </Tooltip>
                     ({record.id})
                 </div>
             }
@@ -428,19 +391,15 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
     const containerStyle = {
         ...props.style,
 
-        display: 'flex',
-        flexDirection: 'column',
         flexShrink: 0,
         position: 'absolute',
         width: '100%',
         height: '100%',
     } as React.CSSProperties
 
-    const toolboxHeight = groupMode ? '48px' : '0'
 
-    return <div
+    return <Flex vertical
         style={containerStyle}
-        className='overflow-y-overlay overflow-x-overlay'
     >
 
         { /* filters */ }
@@ -481,23 +440,15 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             </Button>
         </Flex>
 
-        <div style={{
-            flexGrow: 1,
-            flexShrink: 0,
-            height: `calc(100% - ${toolboxHeight})`,
-            marginTop: 4
-        }} className='overflow-y-overlay'>
-            <Spin spinning={ dataLoading }>
-                <Table
-                    columns={tableColumns}
-                    dataSource={tableDataSource}
-                    pagination={pagination}
-                    onChange={(newPagination) => {
-                        fetchData(newPagination)
-                    }}
-                />
-            </Spin>
-        </div>
+        <AutoGrowAntdTable
+            columns={tableColumns}
+            dataSource={tableDataSource}
+            pagination={pagination}
+            onChange={(newPagination) => {
+                fetchData(newPagination)
+            }}
+            loading={dataLoading}
+        />
 
 
         { /* delete seat dialog */ }
@@ -556,7 +507,6 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             groupMode &&
             <Flex style={{
                 flexShrink: 0,
-                height: toolboxHeight,
                 padding: 8
             }}>
                 <Button 
@@ -580,7 +530,18 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
             onClose={() => {setSingleClickLoginSeat(null)}}
         />
 
-    </div>
+        <ChangeNicknameDrawer seat={ changeNicknameTargetSeat } 
+            onClose={(newName) => {
+                if (newName !== changeNicknameTargetSeat?.nickname) {
+                    changeNicknameTargetSeat!.nickname = newName
+                    setTableDataSource([...tableDataSource])
+                }
+
+                setChangeNicknameTargetSeat(null)
+            }} 
+        />
+
+    </Flex>
     
 
 })

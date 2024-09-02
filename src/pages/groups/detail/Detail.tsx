@@ -91,7 +91,10 @@ export default function DetailPage() {
 
         return <div style={{
             width: '100%',
-            margin: 16
+
+            boxSizing: 'border-box',
+            padding: 16,
+            flexShrink: 0
         }}><Spin spinning={groupInfoLoading}>
 
             <div>基本信息</div>
@@ -129,11 +132,10 @@ export default function DetailPage() {
             />
         </DetailCard>
 
-        <DetailCard title='桌面环境' width='100%' height={400}>
+        <DetailCard title='桌面环境' width='100%' height={1000}>
             <SeatList groupId={groupId} ref={seatListRef} />
         </DetailCard>
 
-        <div style={{ height: 64 }} />
     </Flex>
 }
 
@@ -153,11 +155,15 @@ function DetailCard(props: DetailCardProps) {
     const style = {
         ...props.style,
 
-        margin: 16,
+        boxSizing: 'border-box',
+        padding: 4,
+
+        marginLeft: 16,
+        marginRight: 16,
+        marginBottom: 16,
         borderRadius: 4,
         position: 'relative',
         border: 'solid 1px #6662',
-        marginTop: 8
     } as React.CSSProperties
 
     for (const key of ['maxWidth', 'maxHeight', 'width', 'height']) {

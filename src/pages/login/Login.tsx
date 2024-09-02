@@ -176,6 +176,11 @@ export default function LoginPage() {
 
     const loginButtonStyles = LoginPageBackgroundManager.instance.background.styles!.button
 
+    const footNoteColor = {
+        shadow: '#0000',
+        text: '#0007'
+    }
+
     return <div
         style={{
             width: '100%',
@@ -345,10 +350,11 @@ export default function LoginPage() {
             bottom: 0,
             left: '50%',
             transform: 'translateX(-50%)',
-            color: '#0007',
+            color: footNoteColor.text,
             textAlign: 'center',
             borderRadius: 12,
             padding: 4,
+            textShadow: `-1px 1px 0 ${footNoteColor.shadow}, 1px 1px 0 ${footNoteColor.shadow}, 1px -1px 0 ${footNoteColor.shadow}, -1px -1px 0 ${footNoteColor.shadow}`,
         }}>
             Vesper Front: { Version.tag } ({Version.code}) {Version.buildTime}
             <br/>

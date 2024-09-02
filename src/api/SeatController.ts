@@ -5,6 +5,7 @@
 */
 
 import { SeatEntity } from "./Entities"
+import { PagedResult } from "./PagedResult"
 
 
 export interface CreateSeatsResponseDtoEntry {

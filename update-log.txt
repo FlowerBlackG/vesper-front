@@ -1,4 +1,20 @@
 
+version  tag  : 1.5.2
+version  code : 13
+complete time : 2024-09-02T22:20+08:00
+update   log  :
+
+
+Seat list:
+  1. Adaptive table size (bugfix).
+  2. A drawer for editing seats' nickname (bugfix).
+
+Group detail page:
+  Better viewing experience.
+
+
+--------------------------------
+
 version  tag  : 1.5.1
 version  code : 12
 complete time : 2024-09-02T17:51+08:00

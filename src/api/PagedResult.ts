@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MulanPSL-2.0
 
-interface PagedResult <T> {
+export interface PagedResult <T> {
     records: T[]
     pageNo: number
     pageSize: number
