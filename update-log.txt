@@ -1,4 +1,14 @@
+version  tag  : 1.5.3
+version  code : 14
+complete time : 2024-09-04T13:43+08:00
+update   log  :
 
+
+Seat list:
+  Improve the stability of the one-click login function.
+
+
+--------------------------------
 version  tag  : 1.5.2
 version  code : 13
 complete time : 2024-09-02T22:20+08:00
