@@ -7,6 +7,7 @@ update   log  :
 Seat List:
   New: Upload SSH Key to seat.
   New: Change group.
+  New: You can now copy linux login password to clipboard with a single click.
 
 
 Group Detail:
