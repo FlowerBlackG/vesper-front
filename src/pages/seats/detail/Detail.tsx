@@ -12,16 +12,13 @@ import { SeatEntity } from "../../../api/Entities"
 import { request } from "../../../utils/request"
 import { useSearchParams } from "react-router-dom"
 import { Button, Card, Descriptions, Flex, Input, Popover, Space, Spin, Tooltip, message } from "antd"
-import styles from './Detail.module.css'
-import DateTimeUtils from "../../../utils/DateTimeUtils"
-import { DesktopOutlined, LinkOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
-import axios, { Axios } from "axios"
+import { DesktopOutlined, KeyOutlined, LinkOutlined, PlayCircleOutlined, PoweroffOutlined, ReloadOutlined } from "@ant-design/icons"
 import Config from "../../../common/Config"
-import { LightIndicator } from "../../../components/LightIndicator"
+import { SeatInfo, VesperStatus } from "./SeatInfo"
+import { UploadSSHKeyDrawer } from "./UploadSSHKeyDrawer"
 
 
 
-type VesperStatus = 'on' | 'off' | 'unknown'
 
 const data = {
     pageActive: true
@@ -60,6 +57,8 @@ export default function DetailPage() {
 
     const [launchVesperDisplayWidth, setLaunchVesperDisplayWidth] = useState(1440)
     const [launchVesperDisplayHeight, setLaunchVesperDisplayHeight] = useState(900)
+
+    const [uploadSSHKeyDrawerOpen, setUploadSSHKeyDrawerOpen] = useState(false)
 
     /* ctor */
     function constructor() {
@@ -209,122 +208,6 @@ export default function DetailPage() {
     /* render */
 
 
-    function systemStatusIndicators(inTable: boolean) {
-
-        const statusToColor = (status: VesperStatus) => {
-            if (status === 'on') {
-                return 'green'
-            } else if (status === 'off') {
-                return 'red'
-            } else if (status === 'unknown') {
-                return 'grey'
-            } else {
-                globalHooks.app.message.error("internal error! (9c2139ab-a693-4a01-92a3-50a861b74e8e)")
-            }
-        }
-
-        const tableStyle = {} as React.CSSProperties
-        if (inTable) {
-            tableStyle.width = 'auto'
-        } else {
-            tableStyle.margin = 'auto'
-        }
-
-        return <table style={ tableStyle }>
-            <tr>
-                <td> { /* indicator */ }
-                    <LightIndicator color={statusToColor(linuxLoginStatus)} />
-                </td>
-                <td>linux 登录状态</td>
-            </tr>
-            <tr>
-                <td> { /* indicator */ }
-                    <LightIndicator color={statusToColor(vesperLauncherStatus)} />
-                </td>
-                <td>落霞引导 (vesper launcher) 状态</td>
-            </tr>
-            <tr>
-                <td> { /* indicator */ }
-                    <LightIndicator color={statusToColor(vesperCoreStatus)} />
-                </td>
-                <td>落霞核心 (vesper core) 状态</td>
-            </tr>
-        </table>
-    }
-
-
-    function seatInfo() {
-
-        return <Flex vertical>
-
-            <center style={{ marginTop: 8 }}>
-                { `${seatEntity!.nickname} (${seatEntity!.id})` }
-            </center>
-
-            <div style={{ height: 16 }} />
-
-            { systemStatusIndicators(false) }
-
-            <Flex style={{ alignItems: "center", justifyContent: 'center' }}>
-
-
-                <div style={{ width: 16 }} />
-
-                <div></div>
-            </Flex>
-
-            <Descriptions bordered
-                style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginTop: 16,
-                }}
-            >
-                <Descriptions.Item
-                    label='创建时间'
-                    children={DateTimeUtils.iso8601toHumanFriendly(seatEntity!.createTime)}
-                />
-
-                <Descriptions.Item
-                    label='上次登录'
-                    children={seatEntity!.lastLoginTime === null ? '未曾登录' : DateTimeUtils.iso8601toHumanFriendly(seatEntity!.lastLoginTime)}
-                />
-
-                <Descriptions.Item
-                    label='所属群组'
-                    children={
-                        seatEntity!.groupId !== null ? 
-                            `${seatEntity!.groupName} (${seatEntity!.groupId})`
-                            :
-                            '无'
-                    }
-                />
-
-                <Descriptions.Item
-                    label='linux uid'
-                    children={seatEntity!.linuxUid}
-                />
-
-                <Descriptions.Item
-                    label='linux 用户名'
-                    children={seatEntity!.linuxLoginName}
-                />
-
-                <Descriptions.Item
-                    label='linux 登录密码'
-                    children={seatEntity?.linuxPasswdRaw}
-                />
-
-                <Descriptions.Item
-                    label='备注'
-                    children={seatEntity!.note}
-                />
-                
-            </Descriptions>
-        </Flex>
-    }
-
-
     function vncInfo() {
         return <Descriptions 
             title='VNC 信息' 
@@ -397,6 +280,7 @@ export default function DetailPage() {
     function operationButtons() {
         let buttons = []
 
+        // 开机
         buttons.push(
             <Button
                 type="primary"
@@ -429,6 +313,7 @@ export default function DetailPage() {
             </Button>
         )
 
+        // 启动 vesper
         buttons.push(
             <Popover content={
                 <Flex vertical>
@@ -492,6 +377,7 @@ export default function DetailPage() {
             </Popover>
         )
 
+        // 关机
         buttons.push(
             <Button danger
                 type="primary"
@@ -525,6 +411,7 @@ export default function DetailPage() {
         )
 
 
+        // 使用内置vnc连接
         buttons.push(
             <Tooltip title={
                 vncInfoLoaded ? '内置 VNC Viewer 性能较差。建议下载安装并使用 RealVNC VNC Viewer 连接。' : ''
@@ -542,6 +429,19 @@ export default function DetailPage() {
                     用内置VNC Viewer连接
                 </Button>
             </Tooltip>
+        )
+
+
+        // 上传ssh公钥
+        buttons.push(
+            <Button type="primary" shape="round" ghost
+                icon={<KeyOutlined />}
+                onClick={() => {
+                    setUploadSSHKeyDrawerOpen(true)
+                }}
+            >
+                上传SSH公钥
+            </Button>
         )
 
         return <Space style={{
@@ -574,13 +474,31 @@ export default function DetailPage() {
         />
 
         { /* 基本信息 */ }
-        { seatEntity !== null && seatInfo() }
+        <SeatInfo
+            seatEntity={seatEntity}
+            linuxLoginStatus={linuxLoginStatus}
+            vesperLauncherStatus={vesperLauncherStatus}
+            vesperCoreStatus={vesperCoreStatus}
+        />
 
         { /* vnc 信息 */ }
         { vncInfo() }
 
+        
         { /* 操作按钮 */ }
         { operationButtons() }
+        {
+            seatEntity !== null
+            &&
+            <UploadSSHKeyDrawer
+                seat={seatEntity}
+                open={uploadSSHKeyDrawerOpen}
+                onClose={() => {
+                    setUploadSSHKeyDrawerOpen(false)
+                }}
+            />
+        }
+        
     
     </Flex>
 }

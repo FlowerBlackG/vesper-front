@@ -31,13 +31,13 @@ export interface UserGroupEntity {
 export interface SeatEntity {
     id: number
     userId: number
-    groupId: number
+    groupId: number | null
     creator: number
     seatEnabled: boolean
     nickname: string
     linuxUid: number
     linuxLoginName: number
-    linuxPasswdRaw: number
+    linuxPasswdRaw: string
     note: string
     createTime: string
     lastLoginTime: string

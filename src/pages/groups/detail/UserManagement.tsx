@@ -120,7 +120,10 @@ export function UserManagement(props: UserManagementProps) {
 
                 if (hasPermission(GroupPermission.ADD_OR_REMOVE_USER)) {
                     buttons.push(
-                        <Popconfirm title='确定？' cancelText='算了' okText='嗯！'
+                        <Popconfirm 
+                            title='这将删除该用户在该组的所有桌面环境！' 
+                            cancelText='算了' 
+                            okText='嗯！'
                             style={{
                                 margin: 2
                             }}

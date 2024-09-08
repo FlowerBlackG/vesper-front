@@ -43,17 +43,16 @@ export function ChangeNicknameDrawer(props: ChangeNicknameDrawerProps) {
             }
         }).then(res => {
             globalHooks.app.message.success('成功')
-            props.seat!.nickname = name
-            close()
+            close(name)
         }).catch(err => {}).finally(() => {
             setConfirmLoading(false)
         })
     }
 
 
-    function close() {
+    function close(newName: string) {
         setName('')
-        props.onClose(props.seat!.nickname)
+        props.onClose(newName)
         
     }
 
@@ -63,7 +62,7 @@ export function ChangeNicknameDrawer(props: ChangeNicknameDrawerProps) {
     return <Drawer
         destroyOnClose={true}
         onClose={() => {
-            close()
+            close(props.seat!.nickname)
         }}
 
         open={props.seat !== null}

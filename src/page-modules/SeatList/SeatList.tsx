@@ -23,6 +23,7 @@ import { PagedResult } from '../../api/PagedResult'
 import { AutoGrowAntdTable } from '../../components/AutoGrowAntdTable/AutoGrowAntdTable'
 import { ChangeNicknameDrawer } from './ChangeNicknameDrawer'
 import { SingleClickLoginDialog } from './SingleClickLoginDialog'
+import { ChangeGroupDrawer } from './ChangeGroupDrawer'
 
 
 export interface SeatListProps {
@@ -85,6 +86,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
     })
 
     const [changeNicknameTargetSeat, setChangeNicknameTargetSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
+    const [changeGroupTargetSeat, setChangeGroupTargetSeat] = useState<GetSeatsResponseDtoEntry | null>(null)
 
     const [search, setSearch] = useState('')
 
@@ -259,6 +261,27 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
                 }
 
+                
+                // change group
+                if (
+                    globalData.userPermissions.has(Permission.DELETE_ANY_SEAT)
+                    ||
+                    (
+                        record.groupId !== null
+                        &&
+                        globalData.groupPermissions.has(record.groupId, GroupPermission.CREATE_OR_DELETE_SEAT)
+                    )
+                ) {
+                    buttons.push(
+                        <Button type='primary'
+                            shape='round'
+                            onClick={() => setChangeGroupTargetSeat(record)}
+                        >
+                            换组
+                        </Button>
+                    )
+                }
+
 
                 // poweroff
                 buttons.push(
@@ -307,6 +330,7 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
                         />
                     )
                 }
+
 
                 return <div style={{
                     display: 'flex',
@@ -540,6 +564,17 @@ export const SeatList = forwardRef(function (props: SeatListProps, ref) {
 
                 setChangeNicknameTargetSeat(null)
             }} 
+        />
+
+        <ChangeGroupDrawer
+            seat={changeGroupTargetSeat}
+            onClose={(newGroup) => {
+                if (newGroup !== changeGroupTargetSeat?.groupId) {
+                    fetchData(pagination)
+                }
+
+                setChangeGroupTargetSeat(null)
+            }}
         />
 
     </Flex>
