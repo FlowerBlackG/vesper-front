@@ -1,3 +1,13 @@
+version  tag  : 1.7.0
+version  code : 16
+complete time : 2024-09-09T17:42+08:00
+update   log  :
+
+
+New: Move user from one group to another.
+
+--------------------------------
+
 version  tag  : 1.6.0
 version  code : 15
 complete time : 2024-09-08T18:53+08:00

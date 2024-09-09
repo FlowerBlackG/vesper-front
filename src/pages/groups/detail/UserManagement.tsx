@@ -26,6 +26,7 @@ import * as XLSX from 'xlsx'
 
 import styles from './UserManagement.module.css'
 import XlsxUtils from "../../../utils/XlsxUtils"
+import { UserChangeGroupDrawer } from "./UserChangeGroupDrawer"
 
 
 interface UserManagementProps {
@@ -38,7 +39,7 @@ export function UserManagement(props: UserManagementProps) {
     /* states */
 
     const [pageLoading, setPageLoading] = useState(false)
-    const [tableDataSource, setTableDataSource] = useState([])
+    const [tableDataSource, setTableDataSource] = useState<UserEntity[]>([])
 
 
     const [addUsersDialogOpen, setAddUsersDialogOpen] = useState(false)
@@ -46,6 +47,8 @@ export function UserManagement(props: UserManagementProps) {
     const [addSeatDrawerTargetUser, setAddSeatDrawerTargetUser] = useState<UserEntity | null>(null)
 
     const [permissionViewerTargetUser, setPermissionViewerTargetUser] = useState<UserEntity | null>(null)
+
+    const [userChangeGroupTargetUser, setUserChangeGroupTargetUser] = useState<UserEntity | null>(null)
 
 
     /* hooks */
@@ -124,9 +127,6 @@ export function UserManagement(props: UserManagementProps) {
                             title='这将删除该用户在该组的所有桌面环境！' 
                             cancelText='算了' 
                             okText='嗯！'
-                            style={{
-                                margin: 2
-                            }}
                             onConfirm={() => {
                                 setPageLoading(true)
                                 request({
@@ -152,12 +152,33 @@ export function UserManagement(props: UserManagementProps) {
                                 })
                             }}
                         >
-                            <Button danger type="primary" shape="round" ghost>
+                            <Button danger type="primary" shape="round" ghost
+                                style={{
+                                    margin: 2
+                                }}
+                            >
                                 踢掉
                             </Button>
                         </Popconfirm>
                     )
                 }
+
+
+                if (hasPermission(GroupPermission.ADD_OR_REMOVE_USER)) {
+                    buttons.push(
+                        <Button shape="round" ghost type="primary"
+                            style={{
+                                margin: 2
+                            }}
+                            onClick={() => {
+                                setUserChangeGroupTargetUser(record)
+                            }}
+                        >
+                            换组
+                        </Button>
+                    )
+                }
+
 
                 return <div
                     style={{
@@ -217,7 +238,7 @@ export function UserManagement(props: UserManagementProps) {
 
 
     function exportUserTable() {
-        let tableData = structuredClone(tableDataSource)
+        let tableData = structuredClone(tableDataSource) as any[]
         for (let it of tableData) {
             it['vesper-username'] = it['username']
         }
@@ -336,6 +357,29 @@ export function UserManagement(props: UserManagementProps) {
             groupId={props.groupId}    
             onClose={() => {setPermissionViewerTargetUser(null)}}
             user={permissionViewerTargetUser}
+        />
+
+        
+        <UserChangeGroupDrawer
+            onClose={(success) => {
+                if (success) {
+                    if (userChangeGroupTargetUser !== null) {
+                        const idx = tableDataSource.indexOf(userChangeGroupTargetUser, 0)
+                        if (idx > -1) {
+                            tableDataSource.splice(idx, 1)
+                            setTableDataSource([...tableDataSource])
+                        }
+                    } else {
+                        const msg = '网页内部异常。错误定位码：' + 'dca325bf-939b-48ba-ba98-c1a9e27e9f99'
+                        globalHooks.app.message.error(msg)
+                        console.error(msg)
+                    }
+                }
+
+                setUserChangeGroupTargetUser(null)
+            }}
+            user={userChangeGroupTargetUser}
+            fromGroup={props.groupId}
         />
 
     </Flex>
