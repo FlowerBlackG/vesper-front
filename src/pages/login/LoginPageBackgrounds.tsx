@@ -94,16 +94,16 @@ export class LoginPageBackgroundManager {
         },
 
         {
-            title: '嘉定校区图书馆',
-            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp',
+            title: '旷',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230727_185858.webp',
             photographer: '2051565GTY',
-            location: '同济大学嘉定校区蝴蝶桥',
+            location: '同济大学嘉定校区图书馆',
             description: '',
             colors: {
                 button: {
-                    normal: '#4f4032',
+                    normal: '#c8adc4',
                     boxShadow: '',
-                    hover: '#66462a'
+                    hover: '#d1c2d3'
                 }
             }
         },
@@ -210,6 +210,173 @@ export class LoginPageBackgroundManager {
                     normal: '#f07c82',
                     boxShadow: '',
                     hover: '#f1939c'
+                }
+            }
+        },
+
+
+        
+        {  // idx: 10
+            title: '安楼',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230307_102609.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区安楼',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#8abcd1',
+                    boxShadow: '',
+                    hover: '#5cb3cc'
+                }
+            }
+        },
+        
+        {  // idx: 11
+            title: '隐春深',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230415_150300.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区艺术与传媒学院',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#229453',
+                    boxShadow: '',
+                    hover: '#66c18c'
+                }
+            }
+        },
+        
+        {  // idx: 12
+            title: '照亮',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230508_180213.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区智信馆',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#fca106',
+                    boxShadow: '',
+                    hover: '#dc9123'
+                }
+            }
+        },
+        
+        {  // idx: 13
+            title: '嘉定校区图书馆',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231122_183343.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区蝴蝶桥',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#4f4032',
+                    boxShadow: '',
+                    hover: '#66462a'
+                }
+            }
+        },
+        
+        {  // idx: 14
+            title: '落日',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230802_183026.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区图书馆',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#5698c3',
+                    boxShadow: '',
+                    hover: '#2177b8'
+                }
+            }
+        },
+        
+        {  // idx: 15
+            title: '贴贴',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230802_191106.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区图书馆（7层）',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#7a7374',
+                    boxShadow: '',
+                    hover: '#5e616d'
+                }
+            }
+        },
+        
+        {  // idx: 16
+            title: '烧！',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20230919_180324.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区博楼',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#815c94',
+                    boxShadow: '',
+                    hover: '#7e1671'
+                }
+            }
+        },
+        
+        {  // idx: 17
+            title: '阳光',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20231124_125103.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区图书馆草坪',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#daa45a',
+                    boxShadow: '',
+                    hover: '#e7a23f'
+                }
+            }
+        },
+        
+        {  // idx: 18
+            title: '好困啊啊！！',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20240316_120846.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区友园19-20号楼',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#f28e16',
+                    boxShadow: '',
+                    hover: '#f9a633'
+                }
+            }
+        },
+        
+        {  // idx: 19
+            title: '描绘',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/20240323_110020.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区安楼',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#c08eaf',
+                    boxShadow: '',
+                    hover: '#a35c8f'
+                }
+            }
+        },
+        
+        {  // idx: 20
+            title: '嘉图四季',
+            url: 'https://canfish.oss-cn-shanghai.aliyuncs.com/app/vesper-front/jiading-lib-seasons.webp',
+            photographer: '2051565GTY',
+            location: '同济大学嘉定校区图书馆（14层）',
+            description: '',
+            colors: {
+                button: {
+                    normal: '#1a94bc',
+                    boxShadow: '',
+                    hover: '#158bb8'
                 }
             }
         },
